@@ -1,0 +1,1 @@
+clang++ src/*.cpp -o tynebourne.exe -Iinclude -Llib -lSDL2 -lSDL2_image -Wno-gnu-designator
