@@ -24,15 +24,24 @@ void UpdateWindow(Window* window)
         }
         if(ev.type == SDL_KEYDOWN)
         {
-            if(ev.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                window->running = false;
-            }
+            if(ev.key.keysym.sym == SDLK_w) window->input.w = true;
+            if(ev.key.keysym.sym == SDLK_a) window->input.a = true;
+            if(ev.key.keysym.sym == SDLK_s) window->input.s = true;
+            if(ev.key.keysym.sym == SDLK_d) window->input.d = true;
+
+            if(ev.key.keysym.sym == SDLK_ESCAPE) window->running = false;
+        }
+        if(ev.type == SDL_KEYUP)
+        {
+            if(ev.key.keysym.sym == SDLK_w) window->input.w = false;
+            if(ev.key.keysym.sym == SDLK_a) window->input.a = false;
+            if(ev.key.keysym.sym == SDLK_s) window->input.s = false;
+            if(ev.key.keysym.sym == SDLK_d) window->input.d = false;
         }
         if(ev.type == SDL_MOUSEMOTION)
         {
-            window->mouseX = ev.motion.x;
-            window->mouseY = ev.motion.y;
+            window->input.mouseX = ev.motion.x;
+            window->input.mouseY = ev.motion.y;
         }
     }
 }

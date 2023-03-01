@@ -31,28 +31,65 @@ void EntityUpdate(Entity* entity)
    switch(entity->type)
    {
     case(entity_player):
-        entity->position.x = game.window.mouseX;
-        entity->position.y = game.window.mouseY;
+    {
+        float speed = 0.15f;
+        
+        float playerX = entity->position.x;
+        float playerY = entity->position.y;
+        
+        float moveX = (game.window.input.d - game.window.input.a);
+        float moveY = (game.window.input.s - game.window.input.w);
+
+        float moveLength = sqrtf(moveX * moveX + moveY * moveY);
+
+        if(moveLength == 0) moveLength = 1;
+
+        moveX /= moveLength;
+        moveY /= moveLength;
+
+        moveX *= speed;
+        moveY *= speed;
+
+        entity->position.x += moveX;
+        entity->position.y += moveY;
+
+        //printf("%f, %f\n", entity->position.x, entity->position.y);
+    }
     break;
 
     case(entity_none):
-    
+    {
+
+    }
     break;
 
     case(entity_object):
-
+    {
+        
+    }
     break;
    }
 }
-        
-Entity MakeEntity(EntityType entityType, Vec2 entityPos)
+
+Sprite MakeSprite(const char* path)
 {
-    Entity temp;
+    Sprite temp;
+
+    temp.sprite = IMG_Load(path);
+    temp.texture = SDL_CreateTextureFromSurface(game.window.renderer, temp.sprite);
+
+    return temp;
+}
+
+Entity MakeEntity(EntityType entityType, Vec2 entityPos, const char* spriteFile)
+{
+    Entity temp = {};
 
     temp.type = entityType;
     temp.position.x = entityPos.x;
     temp.position.y = entityPos.y;
-
+    temp.sprite = MakeSprite(spriteFile);
+    
     return temp;
 }
 
@@ -62,21 +99,18 @@ int main()
 
     for(int i = 0; i < 10; i++)
     {
-        game.entities[FindFreeEntity()] = MakeEntity(entity_object, Vec2{ rand() / (float)RAND_MAX * 500, rand() / (float)RAND_MAX * 500, });
+        game.entities[FindFreeEntity()] = MakeEntity(entity_object, Vec2{ rand() / (float)RAND_MAX * 1240, rand() / (float)RAND_MAX * 700, }, "default.png");
     }
 
     //make the player entity
-    game.entities[FindFreeEntity()] = MakeEntity(entity_player, Vec2{500, 500});
+    game.entities[FindFreeEntity()] = MakeEntity(entity_player, Vec2{500, 500}, "ball.png");
 
     while(game.window.running)
     {
         UpdateWindow(&game.window);
 
-        SDL_SetRenderDrawColor(game.window.renderer, game.window.mouseX / 5, game.window.mouseY / 5, 100, 255);
+        SDL_SetRenderDrawColor(game.window.renderer, game.window.input.mouseX / 5, game.window.input.mouseY / 5, 100, 255);
         SDL_RenderClear(game.window.renderer);
-
-        SDL_Surface* sprite = IMG_Load("square.png");
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(game.window.renderer, sprite);
 
         for(int i = 0; i < max_entity_count; i++)
         {
@@ -90,11 +124,11 @@ int main()
             {
                 x: (int)entity->position.x,
                 y: (int)entity->position.y,
-                w: 25,
-                h: 25
+                w: 35,
+                h: 35
             };
 
-            SDL_RenderCopy(game.window.renderer, texture, NULL, &spriteRect);
+            SDL_RenderCopy(game.window.renderer, entity->sprite.texture, NULL, &spriteRect);
         }
 
         SDL_RenderPresent(game.window.renderer);

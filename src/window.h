@@ -5,8 +5,16 @@ struct Window
 {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    float mouseX, mouseY;
     bool running;
+    struct 
+    { 
+        float mouseX;
+        float mouseY;
+        bool w;
+        bool a;
+        bool s;
+        bool d;
+    }input;
 };
 
 void InitWindow(Window* window);

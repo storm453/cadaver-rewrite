@@ -11,8 +11,15 @@ struct Vec2
     float y;
 };
 
+struct Sprite
+{
+    SDL_Surface* sprite;
+    SDL_Texture* texture;
+};
+
 struct Entity
 {
     EntityType type = entity_none;
     Vec2 position = { x: 0, y: 0 };
+    Sprite sprite;
 };
