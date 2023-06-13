@@ -3,16 +3,16 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-void InitWindow(Window* window)
+void init_window(Window* window)
 {
-    window->window = SDL_CreateWindow("Tynebourne", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, 0);
+    window->window = SDL_CreateWindow("Cadaver 2!!!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width, window->height, 0);
     window->running = true;
     window->renderer = SDL_CreateRenderer(window->window, -1, SDL_RENDERER_ACCELERATED);
 
     SDL_SetRenderDrawColor(window->renderer, 0, 0, 0, 255);
 }
 
-void UpdateWindow(Window* window)
+void update_window(Window* window)
 {
     SDL_Event ev;
     
@@ -28,6 +28,7 @@ void UpdateWindow(Window* window)
             if(ev.key.keysym.sym == SDLK_a) window->input.a = true;
             if(ev.key.keysym.sym == SDLK_s) window->input.s = true;
             if(ev.key.keysym.sym == SDLK_d) window->input.d = true;
+            if(ev.key.keysym.sym == SDLK_LSHIFT) window->input.shift = true;
 
             if(ev.key.keysym.sym == SDLK_ESCAPE) window->running = false;
         }
@@ -37,6 +38,7 @@ void UpdateWindow(Window* window)
             if(ev.key.keysym.sym == SDLK_a) window->input.a = false;
             if(ev.key.keysym.sym == SDLK_s) window->input.s = false;
             if(ev.key.keysym.sym == SDLK_d) window->input.d = false;
+            if(ev.key.keysym.sym == SDLK_LSHIFT) window->input.shift = false;
         }
         if(ev.type == SDL_MOUSEMOTION)
         {
@@ -46,7 +48,7 @@ void UpdateWindow(Window* window)
     }
 }
 
-void CleanWindow(Window* window)
+void clean_window(Window* window)
 {
     SDL_DestroyWindow(window->window);
     SDL_DestroyRenderer(window->renderer);

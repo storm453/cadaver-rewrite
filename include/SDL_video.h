@@ -1294,8 +1294,8 @@ extern DECLSPEC int SDLCALL SDL_SetWindowFullscreen(SDL_Window * window,
  *
  * \since This function is available since SDL 2.0.0.
  *
- * \sa SDL_UpdateWindowSurface
- * \sa SDL_UpdateWindowSurfaceRects
+ * \sa SDL_update_windowSurface
+ * \sa SDL_update_windowSurfaceRects
  */
 extern DECLSPEC SDL_Surface * SDLCALL SDL_GetWindowSurface(SDL_Window * window);
 
@@ -1314,9 +1314,9 @@ extern DECLSPEC SDL_Surface * SDLCALL SDL_GetWindowSurface(SDL_Window * window);
  * \since This function is available since SDL 2.0.0.
  *
  * \sa SDL_GetWindowSurface
- * \sa SDL_UpdateWindowSurfaceRects
+ * \sa SDL_update_windowSurfaceRects
  */
-extern DECLSPEC int SDLCALL SDL_UpdateWindowSurface(SDL_Window * window);
+extern DECLSPEC int SDLCALL SDL_update_windowSurface(SDL_Window * window);
 
 /**
  * Copy areas of the window surface to the screen.
@@ -1336,9 +1336,9 @@ extern DECLSPEC int SDLCALL SDL_UpdateWindowSurface(SDL_Window * window);
  * \since This function is available since SDL 2.0.0.
  *
  * \sa SDL_GetWindowSurface
- * \sa SDL_UpdateWindowSurface
+ * \sa SDL_update_windowSurface
  */
-extern DECLSPEC int SDLCALL SDL_UpdateWindowSurfaceRects(SDL_Window * window,
+extern DECLSPEC int SDLCALL SDL_update_windowSurfaceRects(SDL_Window * window,
                                                          const SDL_Rect * rects,
                                                          int numrects);
 
