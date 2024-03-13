@@ -19,6 +19,12 @@ struct Vec2
     float y;
 };
 
+enum PlayerState
+{
+    player_idle,
+    player_move
+};
+
 struct Entity
 {
     EntityType type = entity_none;
@@ -28,5 +34,11 @@ struct Entity
     Sprite sprite;
     bool render = true;
     float depth;
+    bool animation_enabled = false;
     Animation animation;
+    struct 
+    { 
+        float hp;
+        PlayerState state;
+    }player;
 };
