@@ -10,7 +10,7 @@ Entity* make_player()
 {
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(entity_player, Vec2{500, 500}, "player.png");
+    *entity = make_entity(entity_player, Vec2{500, 500}, "assets/player/player.png");
 
     int entity_width, entity_height;
 

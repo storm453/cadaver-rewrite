@@ -2,16 +2,18 @@
 
 typedef struct SDL_Window SDL_Window;
 typedef struct SDL_Renderer SDL_Renderer;
+typedef void *SDL_GLContext;
 
 struct Window
 {
+    SDL_GLContext context;
     SDL_Window* window;
     SDL_Renderer* renderer;
     bool running;
     float width = 1920;
     float height = 1080;
-    struct 
-    { 
+    struct
+    {
         float mouseX;
         float mouseY;
         bool w;

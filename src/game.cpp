@@ -4,6 +4,9 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <iostream>
+
+#include <cstdint>
 
 //additional utils
 #include "window.h"
@@ -12,6 +15,8 @@
 #include "player.h"
 #include "animation.h"
 #include "chunk.h"
+
+#include "SimplexNoise.h"
 
 Game game;
 
@@ -128,7 +133,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 1240, rand() / (float)RAND_MAX * 700, }, "tree.png");
+        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 1240, rand() / (float)RAND_MAX * 700, }, "assets/dev/tree.png");
 
         int entity_width, entity_height;
 
@@ -187,8 +192,8 @@ int main()
         float target_x = game.player->position.x - game.window.width / 2 + game.player->origin.x / 2;
         float target_y = game.player->position.y - game.window.height / 2;
 
-        camera.x = lerp(camera.x, target_x, 0.01);
-        camera.y = lerp(camera.y, target_y, 0.01);
+        camera.x = lerp(camera.x, target_x, 0.1);
+        camera.y = lerp(camera.y, target_y, 0.1);
 
         game.render_amount = 0;
 
@@ -207,9 +212,14 @@ int main()
                 h: (float) chunk_size
             };
 
-            srand(i);
+            float noise = SimplexNoise::noise(current_chunk->index.x * 2, current_chunk->index.y * 2);
+            (void)noise;
 
-            SDL_SetRenderDrawColor(game.window.renderer, rand()%255, 54, 0, 255);
+            //srand(i);
+
+            noise = (noise + 1) / 2;
+
+            SDL_SetRenderDrawColor(game.window.renderer, 255 * noise, 0, 0, 255);
             SDL_RenderFillRectF(game.window.renderer, &chunk_rect);
         }
 
@@ -264,8 +274,6 @@ int main()
 
             SDL_QueryTexture(current_texture, NULL, NULL, &sprite_width, &sprite_height);
 
-            ///printf("%d\n", sprite_width);
-
             SDL_Rect sprite_rect
             {
                 x: (int)(render_entity->position.x - camera.x - render_entity->origin.x),
@@ -291,7 +299,7 @@ int main()
 
         float fps = 1000.0f / dt;
         
-        sprintf(fps_display, "%f", fps);
+        //snprintf(fps_display, "%f", fps);
         
         SDL_Rect text_rect;
         SDL_Surface* text_surf = TTF_RenderText_Blended(font, fps_display, { 255, 255, 255 });
@@ -308,7 +316,11 @@ int main()
 
         TTF_Quit();
         
-        SDL_RenderPresent(game.window.renderer);
+        //render polygon
+        
+
+        //SDL_RenderPresent(game.window.renderer); //NOT OPENGL
+        SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
 

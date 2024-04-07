@@ -5,11 +5,15 @@
 
 void init_window(Window* window)
 {
-    window->window = SDL_CreateWindow("Cadaver 2!!!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width, window->height, 0);
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 2 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
+
+    Uint32 flags = SDL_WINDOW_OPENGL;
+
+    window->window = SDL_CreateWindow("Cadaver 2!!!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width, window->height, flags);
     window->running = true;
     window->renderer = SDL_CreateRenderer(window->window, -1, SDL_RENDERER_ACCELERATED);
-
-    SDL_SetRenderDrawColor(window->renderer, 0, 0, 0, 255);
+    window->context = SDL_GL_CreateContext(window->window);
 }
 
 void update_window(Window* window)
