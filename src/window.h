@@ -8,7 +8,6 @@ struct Window
 {
     SDL_GLContext context;
     SDL_Window* window;
-    SDL_Renderer* renderer;
     bool running;
     float width = 1920;
     float height = 1080;

@@ -6,6 +6,11 @@
 #include <SDL_ttf.h>
 #include <iostream>
 
+//GL
+#include <GL/glew.h>
+#include <SDL_opengl.h>
+#include <GL/glu.h>
+
 #include <cstdint>
 
 //additional utils
@@ -68,7 +73,7 @@ void entity_update(Entity* entity)
     }
 }
 
-Sprite make_sprite(const char* path)
+/*Sprite make_sprite(const char* path)
 {
     Sprite temp;
 
@@ -76,7 +81,7 @@ Sprite make_sprite(const char* path)
     temp.texture = SDL_CreateTextureFromSurface(game.window.renderer, temp.sprite);
     
     return temp;
-}
+}*/
 
 Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile)
 {
@@ -85,37 +90,64 @@ Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile
     temp.type = entityType;
     temp.position.x = entityPos.x;
     temp.position.y = entityPos.y;
-    temp.sprite = make_sprite(spriteFile);
+    //temp.sprite = make_sprite(spriteFile);
     
     return temp;
 }
 
-Entity find_player_entity()
-{
-    Entity temp;
+// Entity find_player_entity()
+// {
+//     Entity temp;
 
-    for(int i = 0; i < max_entity_count; i++)
-    {
-        if(game.entities[i].type == entity_player)
-        {
-            temp = game.entities[i];
-        }
-    }
+//     for(int i = 0; i < max_entity_count; i++)
+//     {
+//         if(game.entities[i].type == entity_player)
+//         {
+//             temp = game.entities[i];
+//         }
+//     }
     
-    return temp;
-}
+//     return temp;
+// }
 
 Camera camera;
 
 Chunk chunks_array[999];
 
+static void render_scene()
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(1, 0, 0);
+
+	glBegin(GL_LINE_LOOP);
+	glVertex2f(0.25, 0.25);
+	glVertex2f(0.75, 0.25);
+	glVertex2f(0.75, 0.75);
+	glVertex2f(0.25, 0.75);
+    
+	glEnd();
+	glFlush();
+}
+
+static void triangle()
+{
+    glBegin(GL_TRIANGLES);
+
+    glColor3f(0.1, 0.2, 0.3);
+    glVertex2f(0, 0);
+    glVertex2f(1, 0);
+    glVertex2f(0, 1);
+
+    glEnd();
+}
+
 int main()
 {
     init_window(&game.window);
-
+    
     Animation player_idle = {};
 
-    player_idle.frames[0] = make_sprite("playeridle1.png");
+    /* player_idle.frames[0] = make_sprite("playeridle1.png");
     player_idle.frames[1] = make_sprite("playeridle2.png");
     player_idle.frames[2] = make_sprite("playeridle3.png");
     player_idle.frames[3] = make_sprite("playeridle4.png");
@@ -124,7 +156,7 @@ int main()
     player_idle.frames[6] = make_sprite("playeridle7.png");
     player_idle.frames[7] = make_sprite("playeridle8.png");
     player_idle.frames[8] = make_sprite("playeridle9.png");
-    player_idle.frames[9] = make_sprite("playeridle10.png");
+    player_idle.frames[9] = make_sprite("playeridle10.png"); */
     
     player_idle.frame_count = 10;
     player_idle.frame_rate = 0.1;
@@ -133,16 +165,16 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 1240, rand() / (float)RAND_MAX * 700, }, "assets/dev/tree.png");
+        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 700, rand() / (float)RAND_MAX * 500, }, "assets/dev/tree.png");
 
-        int entity_width, entity_height;
+        /* int entity_width, entity_height;
 
         SDL_QueryTexture(entity->sprite.texture, NULL, NULL, &entity_width, &entity_height);
         
         entity->origin = { x: (float)entity_width / 2, y: (float)entity_height };
 
         entity->animation = player_idle;
-        entity->animation_enabled = true;
+        entity->animation_enabled = true; */
     }
 
     //make the player entity
@@ -186,8 +218,8 @@ int main()
 
         update_window(&game.window);
 
-        SDL_SetRenderDrawColor(game.window.renderer, 69, 155, 0, 255);
-        SDL_RenderClear(game.window.renderer);
+        //SDL_SetRenderDrawColor(game.window.renderer, 69, 155, 0, 255);
+        //SDL_RenderClear(game.window.renderer);
 
         float target_x = game.player->position.x - game.window.width / 2 + game.player->origin.x / 2;
         float target_y = game.player->position.y - game.window.height / 2;
@@ -200,7 +232,7 @@ int main()
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
-            Chunk* current_chunk = &chunks_array[i];
+            /* Chunk* current_chunk = &chunks_array[i];
 
             V2i chunk_physical = { current_chunk->index.x * chunk_size, current_chunk->index.y * chunk_size };
 
@@ -220,7 +252,7 @@ int main()
             noise = (noise + 1) / 2;
 
             SDL_SetRenderDrawColor(game.window.renderer, 255 * noise, 0, 0, 255);
-            SDL_RenderFillRectF(game.window.renderer, &chunk_rect);
+            SDL_RenderFillRectF(game.window.renderer, &chunk_rect); */
         }
 
         for(int i = 0; i < max_entity_count; i++)
@@ -255,11 +287,12 @@ int main()
             game.render_entities[closest] = game.render_entities[i];
             game.render_entities[i] = oldEntity;
         }
+        //ENTITY RENDERING
         for(int j = 0; j < game.render_amount; j++)
         {
             Entity* render_entity = game.render_entities[j]; 
 
-            int sprite_width, sprite_height;
+            /*int sprite_width, sprite_height;
             
             SDL_Texture* current_texture;
 
@@ -280,13 +313,31 @@ int main()
                 y: (int)(render_entity->position.y - camera.y - render_entity->origin.y),
                 w: sprite_width,
                 h: sprite_height
-            };
+            };*/
 
-            SDL_RenderCopy(game.window.renderer, current_texture, NULL, &sprite_rect);
+            // int entity_x = (render_entity->position.x - camera.x - render_entity->origin.x) / 1920;
+            // int entity_y = (render_entity->position.y - camera.y - render_entity->origin.y) / 1080;
+
+            // int sprite_width = 64;
+            // int sprite_height = 64;
+
+            // glBegin(GL_QUADS);
+
+            // glColor3f(1, 0.2, 0.3);
+            // glVertex2f(entity_x, entity_y);
+            // glVertex2f(entity_x + sprite_width, entity_y);
+            // glVertex2f(entity_x, entity_y + sprite_height);
+            // glVertex2f(entity_x + sprite_width, entity_y + sprite_height);
+            
+            // glEnd();
+
+            render_scene();
+
+            //SDL_RenderCopy(game.window.renderer, current_texture, NULL, &sprite_rect);
         }
 
         //draw text
-        TTF_Init();
+        /*  TTF_Init();
 
         TTF_Font *font = TTF_OpenFont("Roboto-Regular.ttf", 48);
 
@@ -299,7 +350,7 @@ int main()
 
         float fps = 1000.0f / dt;
         
-        //snprintf(fps_display, "%f", fps);
+        snprintf(fps_display, "%f", fps);
         
         SDL_Rect text_rect;
         SDL_Surface* text_surf = TTF_RenderText_Blended(font, fps_display, { 255, 255, 255 });
@@ -314,12 +365,33 @@ int main()
 
         SDL_RenderCopy(game.window.renderer, text, NULL, &text_rect);
 
-        TTF_Quit();
+        TTF_Quit(); */
         
-        //render polygon
-        
+        //Make screen blue
+        glViewport(0, 0, game.window.width, game.window.height);
+        glClearColor(0.f, 0.f, 1.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-        //SDL_RenderPresent(game.window.renderer); //NOT OPENGL
+        //render_scene();
+        //triangle();
+        
+        //lets draw the player
+        glBegin(GL_TRIANGLES);
+
+        float playerx = game.player->position.x / 1920;
+        float playery = game.player->position.y / 1080;
+
+        std::cout << "Player X: " << game.player->position.x;
+        std::cout << " Player Y: " << game.player->position.y << "\n";
+
+        glColor3f(0.1, 0.2, 0.3);
+        glVertex2f(playerx, playery);
+        glVertex2f(playerx + 1, playery);
+        glVertex2f(playerx, playery + 1);
+        
+        glEnd();
+
+        //SDL_RenderPresent(game.window.renderer); //SDL RENDERER
         SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
