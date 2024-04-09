@@ -1,1 +1,1 @@
-clang++ src/*.cpp -o tynebourne.cad -Iinclude -lopengl32 -Llib -lSDL2 -lSDL2_image -lSDL2_ttf -Wno-gnu-designator -g
+clang++ src/*.cpp -o tynebourne.cad -Iinclude -Llib -lopengl32 -lglew32 -lSDL2 -Wno-gnu-designator -g

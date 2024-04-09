@@ -7,7 +7,7 @@
 //silence
 #define GL_SILENCE_DEPRECATION
 
-#if defined (__WIN32__)
+#if defined(__WIN32__)
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
@@ -16,6 +16,8 @@
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #endif
+
+#define GLEW_STATIC
 
 #include <cstdint>
 
@@ -79,16 +81,6 @@ void entity_update(Entity* entity)
     }
 }
 
-/*Sprite make_sprite(const char* path)
-{
-    Sprite temp;
-
-    temp.sprite = IMG_Load(path);
-    temp.texture = SDL_CreateTextureFromSurface(game.window.renderer, temp.sprite);
-    
-    return temp;
-}*/
-
 Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile)
 {
     Entity temp = {};
@@ -101,86 +93,76 @@ Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile
     return temp;
 }
 
-// Entity find_player_entity()
-// {
-//     Entity temp;
-
-//     for(int i = 0; i < max_entity_count; i++)
-//     {
-//         if(game.entities[i].type == entity_player)
-//         {
-//             temp = game.entities[i];
-//         }
-//     }
-    
-//     return temp;
-// }
-
 Camera camera;
 
 Chunk chunks_array[999];
 
-static void render_scene()
+static const GLuint WIDTH = 512;
+static const GLuint HEIGHT = 512;
+static const GLchar* vertex_shader_source =
+    "#version 430\n"
+    "attribute vec2 coord2d;\n"
+    "void main() {\n"
+    "    gl_Position = vec4(coord2d, 0.0, 1.0);\n"
+    "}\n";
+
+static const GLchar* fragment_shader_source =
+    "#version 430\n"
+    "void main() {\n"
+    "    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);\n"
+    "}\n";
+
+static GLfloat vertices[] = 
 {
-    glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(1, 0, 0);
+     0.0,  0.8,
+    -0.8, -0.8,
+     0.8, -0.8,
+};
 
-	glBegin(GL_LINE_LOOP);
-	glVertex2f(0.25, 0.25);
-	glVertex2f(0.75, 0.25);
-	glVertex2f(0.75, 0.75);
-	glVertex2f(0.25, 0.75);
-    
-	glEnd();
-	glFlush();
-}
-
-static void triangle()
+GLuint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
-    glBegin(GL_TRIANGLES);
+    GLchar *log = NULL;
+    GLint log_length, success;
+    GLuint fragment_shader, program, vertex_shader;
 
-    glColor3f(0.1, 0.2, 0.3);
-    glVertex2f(0, 0);
-    glVertex2f(1, 0);
-    glVertex2f(0, 1);
+    /* Vertex shader */
+    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
+    glCompileShader(vertex_shader);
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
 
-    glEnd();
+    /* Fragment shader */
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
+    glCompileShader(fragment_shader);
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &log_length);
+
+    /* Link shaders */
+    program = glCreateProgram();
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
+    glLinkProgram(program);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
+
+    /* Cleanup. */
+    free(log);
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+    return program;
 }
 
 int main()
 {
     init_window(&game.window);
-    
-    Animation player_idle = {};
-
-    /* player_idle.frames[0] = make_sprite("playeridle1.png");
-    player_idle.frames[1] = make_sprite("playeridle2.png");
-    player_idle.frames[2] = make_sprite("playeridle3.png");
-    player_idle.frames[3] = make_sprite("playeridle4.png");
-    player_idle.frames[4] = make_sprite("playeridle5.png");
-    player_idle.frames[5] = make_sprite("playeridle6.png");
-    player_idle.frames[6] = make_sprite("playeridle7.png");
-    player_idle.frames[7] = make_sprite("playeridle8.png");
-    player_idle.frames[8] = make_sprite("playeridle9.png");
-    player_idle.frames[9] = make_sprite("playeridle10.png"); */
-    
-    player_idle.frame_count = 10;
-    player_idle.frame_rate = 0.1;
 
     for(int i = 0; i < 3; i++)
     {
         Entity* entity = &game.entities[find_free_entity()];
 
         *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 700, rand() / (float)RAND_MAX * 500, }, "assets/dev/tree.png");
-
-        /* int entity_width, entity_height;
-
-        SDL_QueryTexture(entity->sprite.texture, NULL, NULL, &entity_width, &entity_height);
-        
-        entity->origin = { x: (float)entity_width / 2, y: (float)entity_height };
-
-        entity->animation = player_idle;
-        entity->animation_enabled = true; */
     }
 
     //make the player entity
@@ -190,12 +172,33 @@ int main()
 
     float last_time = SDL_GetTicks();
 
+    // glViewport(0, 0, game.window.width, game.window.height);
+    // glClearColor(0.f, 0.f, 1.f, 0.f);
+    // glClear(GL_COLOR_BUFFER_BIT);
+
+    //OPEN GL INITALIZTAION CODE
+    GLint attribute_coord2d;
+    GLuint program, vbo;
+
+    glewInit();
+
+    /* Shader setup. */
+    program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
+    attribute_coord2d = glGetAttribLocation(program, "coord2d");
+
+    /* Buffer setup. */
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(attribute_coord2d, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    /* Global draw state */
+    glUseProgram(program);
+    glViewport(0, 0, game.window.width, game.window.height);
+    
     while(game.window.running)
     {
-        glViewport(0, 0, game.window.width, game.window.height);
-        glClearColor(0.f, 0.f, 1.f, 0.f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
 
         for(int i = -chunk_load; i <= chunk_load; i++)
@@ -228,14 +231,11 @@ int main()
 
         update_window(&game.window);
 
-        //SDL_SetRenderDrawColor(game.window.renderer, 69, 155, 0, 255);
-        //SDL_RenderClear(game.window.renderer);
+        float target_x = game.player->position.x; //- game.window.width / 2 //+ game.player->origin.x / 2;
+        float target_y = game.player->position.y; //- game.window.height / 2;
 
-        float target_x = game.player->position.x - game.window.width / 2 + game.player->origin.x / 2;
-        float target_y = game.player->position.y - game.window.height / 2;
-
-        camera.x = lerp(camera.x, target_x, 0.05);
-        camera.y = lerp(camera.y, target_y, 0.05);
+        camera.x = lerp(camera.x, target_x, 0.01);
+        camera.y = lerp(camera.y, target_y, 0.01);
 
         game.render_amount = 0;
 
@@ -246,153 +246,17 @@ int main()
 
             V2i chunk_physical = { current_chunk->index.x * chunk_size, current_chunk->index.y * chunk_size };
 
-            /* SDL_FRect chunk_rect
-            {
-                x: chunk_physical.x - camera.x,
-                y: chunk_physical.y - camera.y,
-                w: (float) chunk_size,
-                h: (float) chunk_size
-            };
-
-            float noise = SimplexNoise::noise(current_chunk->index.x * 2, current_chunk->index.y * 2);
-            (void)noise;
-
-            //srand(i);
-
-            noise = (noise + 1) / 2;
-
-            SDL_SetRenderDrawColor(game.window.renderer, 255 * noise, 0, 0, 255);
-            SDL_RenderFillRectF(game.window.renderer, &chunk_rect); */
-
-            glBegin(GL_TRIANGLES);
-
-            int chunk_x = (current_chunk->index.x - camera.x) / 1920;
-            int chunk_y = (current_chunk->index.y - camera.y) / 1080;
-
-            glVertex2f(chunk_x, chunk_y);
-            glVertex2f(chunk_x + chunk_size / 1920, chunk_y);
-            glVertex2f(chunk_x, chunk_y + chunk_size / 1080);
-            //glVertex2f(chunk_x + chunk_size, chunk_y + chunk_size);
-
-            glEnd();
+            //render here
         }
 
-        for(int i = 0; i < max_entity_count; i++)
-        {
-            Entity* entity = &game.entities[i];
-
-            if(entity->type == entity_none) continue;
-
-            entity_update(entity);
-                
-            if(entity->render)
-            {
-                game.render_entities[game.render_amount] = entity;
-
-                ++game.render_amount;
-            }
-        }
-        for(int i = 0; i < game.render_amount; i++)
-        {
-            int closest = i;
-
-            for(int j = i + 1; j < game.render_amount; j++)
-            {
-                if(game.render_entities[closest]->depth < game.render_entities[j]->depth)
-                {
-                    closest = j;
-                }
-            }
-
-            Entity* oldEntity = game.render_entities[closest];
-
-            game.render_entities[closest] = game.render_entities[i];
-            game.render_entities[i] = oldEntity;
-        }
-
+        //set color
+        glClearColor(0.23f, 0.23f, 0.38f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
         
-    
-        //ENTITY RENDERING
-        for(int j = 0; j < game.render_amount; j++)
-        {
-            Entity* render_entity = game.render_entities[j]; 
+        glEnableVertexAttribArray(attribute_coord2d);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDisableVertexAttribArray(attribute_coord2d);
 
-            /*int sprite_width, sprite_height;
-            
-            SDL_Texture* current_texture;
-
-            if(render_entity->animation_enabled)
-            {
-                current_texture = step_animation(&render_entity->animation, game.delta_time)->texture;
-            }
-            else
-            {
-                current_texture = render_entity->sprite.texture;
-            }
-
-            SDL_QueryTexture(current_texture, NULL, NULL, &sprite_width, &sprite_height);
-
-            SDL_Rect sprite_rect
-            {
-                x: (int)(render_entity->position.x - camera.x - render_entity->origin.x),
-                y: (int)(render_entity->position.y - camera.y - render_entity->origin.y),
-                w: sprite_width,
-                h: sprite_height
-            };*/
-
-            double entity_x = (render_entity->position.x - camera.x) / 1920;
-            double entity_y = (render_entity->position.y - camera.y) / 1080;
-
-            double sprite_width = 0.1;
-            double sprite_height = 0.1;
-
-            glBegin(GL_TRIANGLES);
-
-            glColor3f(1, 0.2, 0.3);
-            glVertex2f(entity_x, entity_y);
-            glVertex2f(entity_x + sprite_width, entity_y);
-            glVertex2f(entity_x, entity_y + sprite_height);
-            
-            std::cout << j;
-
-            glEnd();
-            glFlush();
-
-            //SDL_RenderCopy(game.window.renderer, current_texture, NULL, &sprite_rect);
-        }
-
-        //draw text
-        /*  TTF_Init();
-
-        TTF_Font *font = TTF_OpenFont("Roboto-Regular.ttf", 48);
-
-        char fps_display[100];
-        
-        float time = SDL_GetTicks();
-        float dt = time - last_time;
-
-        last_time = time;
-
-        float fps = 1000.0f / dt;
-        
-        snprintf(fps_display, "%f", fps);
-        
-        SDL_Rect text_rect;
-        SDL_Surface* text_surf = TTF_RenderText_Blended(font, fps_display, { 255, 255, 255 });
-        SDL_Texture *text;
-        
-        text = SDL_CreateTextureFromSurface(game.window.renderer, text_surf);
-
-        text_rect.x = 20;
-		text_rect.y = 200;
-		text_rect.w = text_surf->w;
-		text_rect.h = text_surf->h;
-
-        SDL_RenderCopy(game.window.renderer, text, NULL, &text_rect);
-
-        TTF_Quit(); */
-
-        //SDL_RenderPresent(game.window.renderer); //SDL RENDERER
         SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
