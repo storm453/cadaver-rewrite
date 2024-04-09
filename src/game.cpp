@@ -2,14 +2,20 @@
 #include <stdlib.h>
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
 #include <iostream>
 
-//GL
+//silence
+#define GL_SILENCE_DEPRECATION
+
+#if defined (__WIN32__)
 #include <GL/glew.h>
-#include <SDL_opengl.h>
 #include <GL/glu.h>
+#endif
+
+#if defined(__APPLE__)
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#endif
 
 #include <cstdint>
 
@@ -186,6 +192,10 @@ int main()
 
     while(game.window.running)
     {
+        glViewport(0, 0, game.window.width, game.window.height);
+        glClearColor(0.f, 0.f, 1.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
 
         for(int i = -chunk_load; i <= chunk_load; i++)
@@ -224,19 +234,19 @@ int main()
         float target_x = game.player->position.x - game.window.width / 2 + game.player->origin.x / 2;
         float target_y = game.player->position.y - game.window.height / 2;
 
-        camera.x = lerp(camera.x, target_x, 0.1);
-        camera.y = lerp(camera.y, target_y, 0.1);
+        camera.x = lerp(camera.x, target_x, 0.05);
+        camera.y = lerp(camera.y, target_y, 0.05);
 
         game.render_amount = 0;
 
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
-            /* Chunk* current_chunk = &chunks_array[i];
+            Chunk* current_chunk = &chunks_array[i];
 
             V2i chunk_physical = { current_chunk->index.x * chunk_size, current_chunk->index.y * chunk_size };
 
-            SDL_FRect chunk_rect
+            /* SDL_FRect chunk_rect
             {
                 x: chunk_physical.x - camera.x,
                 y: chunk_physical.y - camera.y,
@@ -253,6 +263,18 @@ int main()
 
             SDL_SetRenderDrawColor(game.window.renderer, 255 * noise, 0, 0, 255);
             SDL_RenderFillRectF(game.window.renderer, &chunk_rect); */
+
+            glBegin(GL_TRIANGLES);
+
+            int chunk_x = (current_chunk->index.x - camera.x) / 1920;
+            int chunk_y = (current_chunk->index.y - camera.y) / 1080;
+
+            glVertex2f(chunk_x, chunk_y);
+            glVertex2f(chunk_x + chunk_size / 1920, chunk_y);
+            glVertex2f(chunk_x, chunk_y + chunk_size / 1080);
+            //glVertex2f(chunk_x + chunk_size, chunk_y + chunk_size);
+
+            glEnd();
         }
 
         for(int i = 0; i < max_entity_count; i++)
@@ -287,6 +309,9 @@ int main()
             game.render_entities[closest] = game.render_entities[i];
             game.render_entities[i] = oldEntity;
         }
+
+        
+    
         //ENTITY RENDERING
         for(int j = 0; j < game.render_amount; j++)
         {
@@ -315,23 +340,23 @@ int main()
                 h: sprite_height
             };*/
 
-            // int entity_x = (render_entity->position.x - camera.x - render_entity->origin.x) / 1920;
-            // int entity_y = (render_entity->position.y - camera.y - render_entity->origin.y) / 1080;
+            double entity_x = (render_entity->position.x - camera.x) / 1920;
+            double entity_y = (render_entity->position.y - camera.y) / 1080;
 
-            // int sprite_width = 64;
-            // int sprite_height = 64;
+            double sprite_width = 0.1;
+            double sprite_height = 0.1;
 
-            // glBegin(GL_QUADS);
+            glBegin(GL_TRIANGLES);
 
-            // glColor3f(1, 0.2, 0.3);
-            // glVertex2f(entity_x, entity_y);
-            // glVertex2f(entity_x + sprite_width, entity_y);
-            // glVertex2f(entity_x, entity_y + sprite_height);
-            // glVertex2f(entity_x + sprite_width, entity_y + sprite_height);
+            glColor3f(1, 0.2, 0.3);
+            glVertex2f(entity_x, entity_y);
+            glVertex2f(entity_x + sprite_width, entity_y);
+            glVertex2f(entity_x, entity_y + sprite_height);
             
-            // glEnd();
+            std::cout << j;
 
-            render_scene();
+            glEnd();
+            glFlush();
 
             //SDL_RenderCopy(game.window.renderer, current_texture, NULL, &sprite_rect);
         }
@@ -366,30 +391,6 @@ int main()
         SDL_RenderCopy(game.window.renderer, text, NULL, &text_rect);
 
         TTF_Quit(); */
-        
-        //Make screen blue
-        glViewport(0, 0, game.window.width, game.window.height);
-        glClearColor(0.f, 0.f, 1.f, 0.f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        //render_scene();
-        //triangle();
-        
-        //lets draw the player
-        glBegin(GL_TRIANGLES);
-
-        float playerx = game.player->position.x / 1920;
-        float playery = game.player->position.y / 1080;
-
-        std::cout << "Player X: " << game.player->position.x;
-        std::cout << " Player Y: " << game.player->position.y << "\n";
-
-        glColor3f(0.1, 0.2, 0.3);
-        glVertex2f(playerx, playery);
-        glVertex2f(playerx + 1, playery);
-        glVertex2f(playerx, playery + 1);
-        
-        glEnd();
 
         //SDL_RenderPresent(game.window.renderer); //SDL RENDERER
         SDL_GL_SwapWindow(game.window.window);
