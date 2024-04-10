@@ -8,13 +8,13 @@
 #define GL_SILENCE_DEPRECATION
 
 #if defined(__WIN32__)
+glewInit(); //Initalize GLEW on windows
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
 
 #if defined(__APPLE__)
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#include <OpenGL/gl3.h>
 #endif
 
 #define GLEW_STATIC
@@ -100,14 +100,14 @@ Chunk chunks_array[999];
 static const GLuint WIDTH = 512;
 static const GLuint HEIGHT = 512;
 static const GLchar* vertex_shader_source =
-    "#version 430\n"
+    "#version 120\n"
     "attribute vec2 coord2d;\n"
     "void main() {\n"
     "    gl_Position = vec4(coord2d, 0.0, 1.0);\n"
     "}\n";
 
 static const GLchar* fragment_shader_source =
-    "#version 430\n"
+    "#version 120\n"
     "void main() {\n"
     "    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);\n"
     "}\n";
@@ -180,7 +180,7 @@ int main()
     GLint attribute_coord2d;
     GLuint program, vbo;
 
-    glewInit();
+    
 
     /* Shader setup. */
     program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
