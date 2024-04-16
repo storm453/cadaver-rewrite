@@ -8,12 +8,13 @@
 #define GL_SILENCE_DEPRECATION
 
 #if defined(__WIN32__)
-glewInit(); //Initalize GLEW on windows
+bool windows = true;
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
 
 #if defined(__APPLE__)
+bool windows = false;
 #include <OpenGL/gl3.h>
 #endif
 
@@ -114,9 +115,12 @@ static const GLchar* fragment_shader_source =
 
 static GLfloat vertices[] = 
 {
-     0.0,  0.8,
-    -0.8, -0.8,
-     0.8, -0.8,
+     0.0,  0.8, 0.0,
+    -0.8, -0.8, 0.0,
+     0.8, -0.8, 0.0,
+     -0.8, 0.8, 0.0,
+     0.8, 0.8, 0.0,
+     0.0, -0.8, 0.0,
 };
 
 GLuint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -177,23 +181,34 @@ int main()
     // glClear(GL_COLOR_BUFFER_BIT);
 
     //OPEN GL INITALIZTAION CODE
-    GLint attribute_coord2d;
-    GLuint program, vbo;
+    if(windows) glewInit();
 
-    
+    GLuint program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
 
-    /* Shader setup. */
-    program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
-    attribute_coord2d = glGetAttribLocation(program, "coord2d");
+    //set up shaders in GL program
+    GLuint vbo;
+    GLuint vao;
 
-    /* Buffer setup. */
+    //use buffer object to send vertex to GPU //
+
+    //generates a buffer object name and saves to 'vbo', does not create an actual VBO
     glGenBuffers(1, &vbo);
+    //activate this new buffer, now the next function knows where to copy data to because it is activated
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    //puts data into buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(attribute_coord2d, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    /* Global draw state */
+    // send vertex data to GL pipeline //
+
+    //Generate one vertex array object (VAO) and put its ID in 'vao'
+    glGenVertexArrays(1, &vao);
+    //we are setting the VAO with ID 'vao', as the current active VAO
+    glBindVertexArray(vao);
+    //specify to OpenGL how vertex data in our VBO is to be interpreted by the vertex shader
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    //enables the vertex attribute with index 0 so that it can be accessed and used by the vertex shader during rendering
+    glEnableVertexAttribArray(0);
+
     glUseProgram(program);
     glViewport(0, 0, game.window.width, game.window.height);
     
@@ -249,13 +264,14 @@ int main()
             //render here
         }
 
-        //set color
+        //set screen color
         glClearColor(0.23f, 0.23f, 0.38f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        glEnableVertexAttribArray(attribute_coord2d);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glDisableVertexAttribArray(attribute_coord2d);
+        //binds the vertex array object with the given ID to the current context.
+        glBindVertexArray(vao);
+        //tells GL to draw triangles. 0 is an offset from where to start drawing vertices from. and 3 is the number of vertices
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(game.window.window);
     
