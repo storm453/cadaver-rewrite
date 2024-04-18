@@ -29,6 +29,9 @@
 #include "chunk.h"
 #include "entity.h"
 
+#define STB_IMAGE_IMPLENTATION
+
+#include "stb_image.h"
 #include "SimplexNoise.h"
 
 Game game;
@@ -99,7 +102,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 250, rand() / (float)RAND_MAX * 250, });
+        *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * 640, (rand() / (float)RAND_MAX) * 480 });
     }
 
     //make the player entity
@@ -109,7 +112,7 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    glewInit();
+    //glewInit();
 
     GLuint program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
 
@@ -117,7 +120,7 @@ int main()
     glViewport(0, 0, game.window.width, game.window.height);
     
     GLuint vao;
-
+    
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
