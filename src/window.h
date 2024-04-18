@@ -9,8 +9,8 @@ struct Window
     SDL_GLContext context;
     SDL_Window* window;
     bool running;
-    float width = 1920;
-    float height = 1080;
+    float width = 640;
+    float height = 480;
     struct
     {
         float mouseX;

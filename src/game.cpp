@@ -8,13 +8,11 @@
 #define GL_SILENCE_DEPRECATION
 
 #if defined(__WIN32__)
-bool windows = true;
 #include <GL/glew.h>
 #include <GL/glu.h>
 #endif
 
 #if defined(__APPLE__)
-bool windows = false;
 #include <OpenGL/gl3.h>
 #endif
 
@@ -98,8 +96,6 @@ Camera camera;
 
 Chunk chunks_array[999];
 
-static const GLuint WIDTH = 512;
-static const GLuint HEIGHT = 512;
 static const GLchar* vertex_shader_source =
     "#version 120\n"
     "attribute vec2 coord2d;\n"
@@ -112,16 +108,6 @@ static const GLchar* fragment_shader_source =
     "void main() {\n"
     "    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);\n"
     "}\n";
-
-static GLfloat vertices[] = 
-{
-     0.0,  0.8, 0.0,
-    -0.8, -0.8, 0.0,
-     0.8, -0.8, 0.0,
-     -0.8, 0.8, 0.0,
-     0.8, 0.8, 0.0,
-     0.0, -0.8, 0.0,
-};
 
 GLuint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
@@ -166,7 +152,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 700, rand() / (float)RAND_MAX * 500, }, "assets/dev/tree.png");
+        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 250, rand() / (float)RAND_MAX * 250, }, "assets/dev/tree.png");
     }
 
     //make the player entity
@@ -176,46 +162,27 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    // glViewport(0, 0, game.window.width, game.window.height);
-    // glClearColor(0.f, 0.f, 1.f, 0.f);
-    // glClear(GL_COLOR_BUFFER_BIT);
-
-    //OPEN GL INITALIZTAION CODE
-    if(windows) glewInit();
+    glewInit();
 
     GLuint program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
-
-    //set up shaders in GL program
-    GLuint vbo;
-    GLuint vao;
-
-    //use buffer object to send vertex to GPU //
-
-    //generates a buffer object name and saves to 'vbo', does not create an actual VBO
-    glGenBuffers(1, &vbo);
-    //activate this new buffer, now the next function knows where to copy data to because it is activated
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    //puts data into buffer
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // send vertex data to GL pipeline //
-
-    //Generate one vertex array object (VAO) and put its ID in 'vao'
-    glGenVertexArrays(1, &vao);
-    //we are setting the VAO with ID 'vao', as the current active VAO
-    glBindVertexArray(vao);
-    //specify to OpenGL how vertex data in our VBO is to be interpreted by the vertex shader
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    //enables the vertex attribute with index 0 so that it can be accessed and used by the vertex shader during rendering
-    glEnableVertexAttribArray(0);
 
     glUseProgram(program);
     glViewport(0, 0, game.window.width, game.window.height);
     
+    GLuint vao;
+
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
     while(game.window.running)
     {
+        //set screen color
+        glClearColor(0.23f, 0.23f, 0.38f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
 
+        //chunk logic
         for(int i = -chunk_load; i <= chunk_load; i++)
         {
             for(int j = -chunk_load; j <= chunk_load; j++)
@@ -246,13 +213,12 @@ int main()
 
         update_window(&game.window);
 
+        //move camera
         float target_x = game.player->position.x; //- game.window.width / 2 //+ game.player->origin.x / 2;
         float target_y = game.player->position.y; //- game.window.height / 2;
 
-        camera.x = lerp(camera.x, target_x, 0.01);
-        camera.y = lerp(camera.y, target_y, 0.01);
-
-        game.render_amount = 0;
+        camera.x = lerp(camera.x, target_x, 0.1);
+        camera.y = lerp(camera.y, target_y, 0.1);
 
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
@@ -264,15 +230,41 @@ int main()
             //render here
         }
 
-        //set screen color
-        glClearColor(0.23f, 0.23f, 0.38f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        //binds the vertex array object with the given ID to the current context.
-        glBindVertexArray(vao);
-        //tells GL to draw triangles. 0 is an offset from where to start drawing vertices from. and 3 is the number of vertices
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //entity loop
+        for(int i = 0; i < max_entity_count; i++)
+        {
+            Entity* entity = &game.entities[i];
 
+            entity_update(entity);
+
+            if(entity->type != entity_none)
+            {
+                float entity_x = (entity->position.x - camera.x) / game.window.width;
+                float entity_y = (-entity->position.y + camera.y) / game.window.height;
+
+                float entity_space_size = 0.1;
+
+                float entity_vertices[] =
+                {
+                    entity_x, float(entity_y + entity_space_size), 0.0,
+                    float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
+                    float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
+                };
+
+                GLuint vbo;
+
+                glGenBuffers(1, &vbo);
+                glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
+
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+                glEnableVertexAttribArray(0);
+
+                glDrawArrays(GL_TRIANGLES, 0, 3);
+            }
+        }
+        
+        //render
         SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
