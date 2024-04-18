@@ -13,8 +13,8 @@ struct Game
     float delta_time;
 };
 
-void entity_update(Entity* entity);
-Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile);
-int find_free_entity();
+// void entity_update(Entity* entity);
+// Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile);
+// int find_free_entity();
 
 extern Game game;

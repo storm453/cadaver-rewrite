@@ -42,3 +42,7 @@ struct Entity
         PlayerState state;
     }player;
 };
+
+void entity_update(Entity* entity);
+Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile);
+int find_free_entity();

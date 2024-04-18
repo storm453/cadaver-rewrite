@@ -27,69 +27,15 @@
 #include "player.h"
 #include "animation.h"
 #include "chunk.h"
+#include "entity.h"
 
 #include "SimplexNoise.h"
 
 Game game;
 
-int find_free_entity()
-{
-    for(int i = 0; i < max_entity_count; i++)
-    {
-        if(game.entities[i].type == entity_none)
-        {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
 float lerp(float a, float b, float t)
 {
     return a * (1 - t) + b * t;
-}
-
-void entity_update(Entity* entity)
-{
-    // int entity_height;
-
-    // SDL_QueryTexture(entity->sprite.texture, NULL, NULL, NULL, &entity_height);
-    
-    entity->depth = -(entity->position.y);
-    
-    switch(entity->type)
-    {
-        case(entity_player):
-        {
-            step_player(entity);
-        }
-        break;
-
-        case(entity_none):
-        {
-            
-        }
-        break;
-
-        case(entity_object):
-        {
-            
-        }   
-        break;
-    }
-}
-
-Entity make_entity(EntityType entityType, Vec2 entityPos, const char* spriteFile)
-{
-    Entity temp = {};
-
-    temp.type = entityType;
-    temp.position.x = entityPos.x;
-    temp.position.y = entityPos.y;
-    //temp.sprite = make_sprite(spriteFile);
-    
-    return temp;
 }
 
 Camera camera;
@@ -148,6 +94,7 @@ int main()
 {
     init_window(&game.window);
 
+    //make a couple entities
     for(int i = 0; i < 3; i++)
     {
         Entity* entity = &game.entities[find_free_entity()];
