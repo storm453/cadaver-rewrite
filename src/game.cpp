@@ -99,7 +99,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 250, rand() / (float)RAND_MAX * 250, }, "assets/dev/tree.png");
+        *entity = make_entity(entity_object, Vec2{ rand() / (float)RAND_MAX * 250, rand() / (float)RAND_MAX * 250, });
     }
 
     //make the player entity

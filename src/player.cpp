@@ -10,11 +10,9 @@ Entity* make_player()
 {
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(entity_player, Vec2{0, 0}, "assets/player/player.png");
+    *entity = make_entity(entity_player, Vec2{0, 0});
 
     int entity_width, entity_height;
-
-    SDL_QueryTexture(entity->sprite.texture, NULL, NULL, &entity_width, &entity_height);
     
     entity->origin = { x: (float)entity_width / 2, y: (float)entity_height };
 
