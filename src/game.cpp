@@ -55,7 +55,7 @@ static const GLchar* vertex_shader_source =
 static const GLchar* fragment_shader_source =
     "#version 120\n"
     "void main() {\n"
-    "    gl_FragColor = vec4(1.0, 0.5, 0.0, 1.0);\n"
+    "    gl_FragColor = vec4(0.41, 0.52, 0.53, 1.0);\n"
     "}\n";
 
 GLuint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -127,7 +127,7 @@ int main()
     while(game.window.running)
     {
         //set screen color
-        glClearColor(0.23f, 0.23f, 0.38f, 1.0f);
+        glClearColor(0.81f, 0.75f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
