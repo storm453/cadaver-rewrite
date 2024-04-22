@@ -29,7 +29,7 @@
 #include "chunk.h"
 #include "entity.h"
 
-#define STB_IMAGE_IMPLENTATION
+#define STB_IMAGE_IMPLEMENTATION   
 
 #include "stb_image.h"
 #include "SimplexNoise.h"
@@ -45,51 +45,48 @@ Camera camera;
 
 Chunk chunks_array[999];
 
-static const GLchar* vertex_shader_source =
+static const char* vertex_shader_source =
     "#version 120\n"
+    "out vec4 vertex_color;\n"
     "attribute vec2 coord2d;\n"
     "void main() {\n"
     "    gl_Position = vec4(coord2d, 0.0, 1.0);\n"
+    "    vertex_color = vec4(0.41, 0.52, 0.53, 1.0);\n"
     "}\n";
 
-static const GLchar* fragment_shader_source =
+static const char* fragment_shader_source =
     "#version 120\n"
+    "in vec4 vertex_color;\n"
+    "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    gl_FragColor = vec4(0.41, 0.52, 0.53, 1.0);\n"
+    "    gl_FragColor = our_color;\n"
     "}\n";
 
-GLuint common_get_shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
+unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
-    GLchar *log = NULL;
-    GLint log_length, success;
-    GLuint fragment_shader, program, vertex_shader;
+    unsigned int program, vertex_shader, fragment_shader;
 
-    /* Vertex shader */
+    //vertex shader
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+
     glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-    glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
 
-    /* Fragment shader */
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+
     glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
     glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-    glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &log_length);
 
-    /* Link shaders */
     program = glCreateProgram();
+
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
 
-    /* Cleanup. */
-    free(log);
+    glLinkProgram(program);
+
     glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
+    glDeleteShader(fragment_shader);  
+
     return program;
 }
 
@@ -112,14 +109,13 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    //glewInit();
+    glewInit();
 
-    GLuint program = common_get_shader_program(vertex_shader_source, fragment_shader_source);
+    unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
     glUseProgram(program);
-    glViewport(0, 0, game.window.width, game.window.height);
     
-    GLuint vao;
+    unsigned int vao;
     
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -189,32 +185,63 @@ int main()
 
             if(entity->type != entity_none)
             {
-                float entity_x = (entity->position.x - camera.x) / game.window.width;
-                float entity_y = (-entity->position.y + camera.y) / game.window.height;
+                // float entity_x = (entity->position.x - camera.x) / game.window.width;
+                // float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
-                float entity_space_size = 0.1;
+                // float entity_space_size = 0.1;
 
-                float entity_vertices[] =
-                {
-                    entity_x, float(entity_y + entity_space_size), 0.0,
-                    float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
-                    float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
-                };
+                // float entity_vertices[] =
+                // {
+                //     entity_x, float(entity_y + entity_space_size), 0.0,
+                //     float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
+                //     float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
+                // };
 
-                GLuint vbo;
+                // unsigned int vbo;
 
-                glGenBuffers(1, &vbo);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
+                // glGenBuffers(1, &vbo);
+                // glBindBuffer(GL_ARRAY_BUFFER, vbo);
+                // glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
 
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-                glEnableVertexAttribArray(0);
+                // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+                // glEnableVertexAttribArray(0);
 
-                glDrawArrays(GL_TRIANGLES, 0, 3);
+                // glDrawArrays(GL_TRIANGLES, 0, 3);
             }
         }
         
         //render
+        float vertices[] =
+        {
+            0.0, 0.5, 0.0,
+            -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0,
+            -0.5, 0.5, 0.0,
+            0.0, -0.5, 0.0,
+            0.5, 0.5, 0.0,
+        };
+
+        //make a vbo ID and generate one
+        unsigned int VBO;
+        glGenBuffers(1, &VBO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float) * 3, (void*)0);
+        glEnableVertexAttribArray(0);
+
+        float green_value = sin(SDL_GetTicks()) / 2.0f + 0.5f;
+
+        int vertex_color_location = glGetUniformLocation(program, "our_color");
+        glUniform4f(vertex_color_location, 1.0f, green_value, 0.0f, 1.0f);
+
+        //wireframe
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
         SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
