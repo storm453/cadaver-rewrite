@@ -109,7 +109,7 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    glewInit();
+    //glewInit();
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
@@ -119,6 +119,33 @@ int main()
     
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+
+    float vertices[] =
+    {
+        0.0, 0.5, 0.0,
+        -0.5, -0.5, 0.0,
+        0.5, -0.5, 0.0,
+        -0.5, 0.5, 0.0,
+        0.0, -0.5, 0.0,
+        0.5, 0.5, 0.0,
+    };
+
+    float new_vertices[] =
+    {
+        0.0, -0.5, 0.0,
+        0.5, 0.5, 0.0,
+        -0.5, 0.5, 0.0,
+        0.5, 0.5, 0.0,
+        0.0, -0.5, 0.0,
+        0.5, 0.5, 0.0,
+    };
+
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
 
     while(game.window.running)
     {
@@ -210,24 +237,8 @@ int main()
             }
         }
         
-        //render
-        float vertices[] =
-        {
-            0.0, 0.5, 0.0,
-            -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0,
-            -0.5, 0.5, 0.0,
-            0.0, -0.5, 0.0,
-            0.5, 0.5, 0.0,
-        };
-
-        //make a vbo ID and generate one
-        unsigned int VBO;
-        glGenBuffers(1, &VBO);
-
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(new_vertices), new_vertices);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float) * 3, (void*)0);
         glEnableVertexAttribArray(0);
@@ -238,7 +249,7 @@ int main()
         glUniform4f(vertex_color_location, 1.0f, green_value, 0.0f, 1.0f);
 
         //wireframe
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
