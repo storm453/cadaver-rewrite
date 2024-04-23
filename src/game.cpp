@@ -59,7 +59,7 @@ static const char* fragment_shader_source =
     "in vec4 vertex_color;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    gl_FragColor = our_color;\n"
+    "    gl_FragColor = vec4(0.41, 0.52, 0.53, 1.0);\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -94,6 +94,14 @@ int main()
 {
     init_window(&game.window);
 
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
     //make a couple entities
     for(int i = 0; i < 3; i++)
     {
@@ -125,19 +133,9 @@ int main()
         0.0, 0.5, 0.0,
         -0.5, -0.5, 0.0,
         0.5, -0.5, 0.0,
-        -0.5, 0.5, 0.0,
-        0.0, -0.5, 0.0,
-        0.5, 0.5, 0.0,
-    };
-
-    float new_vertices[] =
-    {
-        0.0, -0.5, 0.0,
-        0.5, 0.5, 0.0,
-        -0.5, 0.5, 0.0,
-        0.5, 0.5, 0.0,
-        0.0, -0.5, 0.0,
-        0.5, 0.5, 0.0,
+        // -0.5, 0.5, 0.0,
+        // 0.0, -0.5, 0.0,
+        // 0.5, 0.5, 0.0,
     };
 
     unsigned int VBO;
@@ -212,46 +210,43 @@ int main()
 
             if(entity->type != entity_none)
             {
-                // float entity_x = (entity->position.x - camera.x) / game.window.width;
-                // float entity_y = (-entity->position.y + camera.y) / game.window.height;
+                float entity_x = (entity->position.x - camera.x) / game.window.width;
+                float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
-                // float entity_space_size = 0.1;
+                float entity_space_size = 0.1;
 
-                // float entity_vertices[] =
-                // {
-                //     entity_x, float(entity_y + entity_space_size), 0.0,
-                //     float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
-                //     float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
-                // };
+                float entity_vertices[] =
+                {
+                    entity_x, float(entity_y + entity_space_size), 0.0,
+                    float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
+                    float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
+                };
 
-                // unsigned int vbo;
+                glBindBuffer(GL_ARRAY_BUFFER, VBO);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(entity_vertices), entity_vertices);
 
-                // glGenBuffers(1, &vbo);
-                // glBindBuffer(GL_ARRAY_BUFFER, vbo);
-                // glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+                glEnableVertexAttribArray(0);
 
-                // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-                // glEnableVertexAttribArray(0);
-
-                // glDrawArrays(GL_TRIANGLES, 0, 3);
+                glDrawArrays(GL_TRIANGLES, 0, 3);
             }
         }
         
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(new_vertices), new_vertices);
+        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(new_vertices), new_vertices);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float) * 3, (void*)0);
-        glEnableVertexAttribArray(0);
+        // glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float) * 3, (void*)0);
+        // glEnableVertexAttribArray(0);
 
-        float green_value = sin(SDL_GetTicks()) / 2.0f + 0.5f;
+        //float green_value = sin(SDL_GetTicks()) / 2.0f + 0.5f;
 
-        int vertex_color_location = glGetUniformLocation(program, "our_color");
-        glUniform4f(vertex_color_location, 1.0f, green_value, 0.0f, 1.0f);
+        //int vertex_color_location = glGetUniformLocation(program, "our_color");
+        //glUniform4f(vertex_color_location, 1.0f, green_value, 0.0f, 1.0f);
 
         //wireframe
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(game.window.window);
     
