@@ -45,21 +45,48 @@ Camera camera;
 
 Chunk chunks_array[999];
 
+// static const char* vertex_shader_source =
+//     "#version 330 core\n"
+//     "out vec3 vertex_color;\n"
+//     "uniform vec2 shift;\n"
+//     "layout (location = 0) in vec3 aPos;\n"
+//     "layout (location = 1) in vec3 aColor;\n"
+//     "void main() {\n"
+//     "    gl_Position = vec4(aPos.x + shift.x, aPos.y + shift.y, aPos.z, 1.0);\n"
+//     "    vertex_color = aColor;\n"
+//     "}\n";
+
+// static const char* fragment_shader_source =
+//     "#version 330 core\n"
+//     "in vec3 vertex_color;\n"
+//     "uniform vec4 our_color;\n"
+//     "void main() {\n"
+//     "    gl_FragColor = vec4(vertex_color.x, our_color.y, vertex_color.y, 1.0f);\n"
+//     "}\n";
+
+//TEXTURES SHADERS
 static const char* vertex_shader_source =
-    "#version 120\n"
-    "out vec4 vertex_color;\n"
-    "attribute vec2 coord2d;\n"
+    "#version 330 core\n"
+    "out vec3 vertex_color;\n"
+    "out vec2 TexCoord;\n"
+    "uniform vec2 shift;\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aColor;\n"
+    "layout (location = 2) in vec2 aTexCoord;\n"
     "void main() {\n"
-    "    gl_Position = vec4(coord2d, 0.0, 1.0);\n"
-    "    vertex_color = vec4(0.41, 0.52, 0.53, 1.0);\n"
+    "    gl_Position = vec4(aPos.x + shift.x, aPos.y + shift.y, aPos.z, 1.0);\n"
+    "    vertex_color = aColor;\n"
+    "    TexCoord = aTexCoord;\n"
     "}\n";
 
 static const char* fragment_shader_source =
-    "#version 120\n"
-    "in vec4 vertex_color;\n"
+    "#version 330 core\n"
+    "in vec3 vertex_color;\n"
+    "in vec2 TexCoord;\n"
+    "uniform sampler2D ourTexture;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    gl_FragColor = vec4(0.41, 0.52, 0.53, 1.0);\n"
+    "    gl_FragColor = texture(ourTexture, TexCoord) * vec4(vertex_color, 1.0f);\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -117,7 +144,7 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    //glewInit();
+    glewInit();
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
@@ -127,15 +154,15 @@ int main()
     
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+    
+    float entity_space_size = 0.2;
 
-    float vertices[] =
-    {
-        0.0, 0.5, 0.0,
-        -0.5, -0.5, 0.0,
-        0.5, -0.5, 0.0,
-        // -0.5, 0.5, 0.0,
-        // 0.0, -0.5, 0.0,
-        // 0.5, 0.5, 0.0,
+    float entity_vertices[] =
+    {   
+        //positions                                     //colors
+        0,                   entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    0.5f, 1.0f,
+        -entity_space_size, -entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f,
+         entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    1.0f, 0.0f,
     };
 
     unsigned int VBO;
@@ -143,7 +170,34 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    //make a texture
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load("wall.jpg", &width, &height, &nrChannels, 0);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    stbi_image_free(data);
 
     while(game.window.running)
     {
@@ -213,40 +267,24 @@ int main()
                 float entity_x = (entity->position.x - camera.x) / game.window.width;
                 float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
-                float entity_space_size = 0.1;
+                int shift_location = glGetUniformLocation(program, "shift");
+                glUniform2f(shift_location, entity_x, entity_y);
 
-                float entity_vertices[] =
-                {
-                    entity_x, float(entity_y + entity_space_size), 0.0,
-                    float(entity_x - entity_space_size), float(entity_y - entity_space_size), 0.0,
-                    float(entity_x + entity_space_size), float(entity_y - entity_space_size), 0.0
-                };
-
-                glBindBuffer(GL_ARRAY_BUFFER, VBO);
-                glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(entity_vertices), entity_vertices);
-
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-                glEnableVertexAttribArray(0);
+                glBindTexture(GL_TEXTURE_2D, texture);
 
                 glDrawArrays(GL_TRIANGLES, 0, 3);
             }
         }
-        
-        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(new_vertices), new_vertices);
 
-        // glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(float) * 3, (void*)0);
-        // glEnableVertexAttribArray(0);
+        float time = SDL_GetTicks() * 0.01;
 
-        //float green_value = sin(SDL_GetTicks()) / 2.0f + 0.5f;
+        float green_value = (sin(time)) / 2.0f + 0.5f;
 
-        //int vertex_color_location = glGetUniformLocation(program, "our_color");
-        //glUniform4f(vertex_color_location, 1.0f, green_value, 0.0f, 1.0f);
+        int vertex_color_location = glGetUniformLocation(program, "our_color");
+        glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
 
         //wireframe
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
         SDL_GL_SwapWindow(game.window.window);
     
