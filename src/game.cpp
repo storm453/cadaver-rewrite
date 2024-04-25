@@ -45,26 +45,6 @@ Camera camera;
 
 Chunk chunks_array[999];
 
-// static const char* vertex_shader_source =
-//     "#version 330 core\n"
-//     "out vec3 vertex_color;\n"
-//     "uniform vec2 shift;\n"
-//     "layout (location = 0) in vec3 aPos;\n"
-//     "layout (location = 1) in vec3 aColor;\n"
-//     "void main() {\n"
-//     "    gl_Position = vec4(aPos.x + shift.x, aPos.y + shift.y, aPos.z, 1.0);\n"
-//     "    vertex_color = aColor;\n"
-//     "}\n";
-
-// static const char* fragment_shader_source =
-//     "#version 330 core\n"
-//     "in vec3 vertex_color;\n"
-//     "uniform vec4 our_color;\n"
-//     "void main() {\n"
-//     "    gl_FragColor = vec4(vertex_color.x, our_color.y, vertex_color.y, 1.0f);\n"
-//     "}\n";
-
-//TEXTURES SHADERS
 static const char* vertex_shader_source =
     "#version 330 core\n"
     "out vec3 vertex_color;\n"
@@ -86,7 +66,7 @@ static const char* fragment_shader_source =
     "uniform sampler2D ourTexture;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    gl_FragColor = texture(ourTexture, TexCoord) * vec4(vertex_color, 1.0f);\n"
+    "    gl_FragColor = texture(ourTexture, TexCoord) * vec4(vertex_color.x, our_color.y, vertex_color.z, 1.0f);\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -121,14 +101,6 @@ int main()
 {
     init_window(&game.window);
 
-    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
     //make a couple entities
     for(int i = 0; i < 3; i++)
     {
@@ -158,11 +130,15 @@ int main()
     float entity_space_size = 0.2;
 
     float entity_vertices[] =
-    {   
-        //positions                                     //colors
-        0,                   entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    0.5f, 1.0f,
-        -entity_space_size, -entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f,
-         entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    1.0f, 0.0f,
+    {
+        //form a square, start with top left triangle
+         entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+        -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
+        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+        //bottom right
+         entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+         entity_space_size, -entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
+        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
     };
 
     unsigned int VBO;
@@ -170,7 +146,7 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -186,13 +162,8 @@ int main()
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
     
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    
     int width, height, nrChannels;
-    unsigned char *data = stbi_load("wall.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("magma.jpg", &width, &height, &nrChannels, 0);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -272,7 +243,7 @@ int main()
 
                 glBindTexture(GL_TEXTURE_2D, texture);
 
-                glDrawArrays(GL_TRIANGLES, 0, 3);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
             }
         }
 
@@ -282,9 +253,6 @@ int main()
 
         int vertex_color_location = glGetUniformLocation(program, "our_color");
         glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
-
-        //wireframe
-        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         SDL_GL_SwapWindow(game.window.window);
     

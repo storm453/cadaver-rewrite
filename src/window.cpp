@@ -5,6 +5,8 @@
 
 void init_window(Window* window)
 {
+    SDL_Init(SDL_INIT_EVERYTHING);
+
     Uint32 flags = SDL_WINDOW_OPENGL;
 
     window->window = SDL_CreateWindow("Cadaver 2!!!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width, window->height, flags);
