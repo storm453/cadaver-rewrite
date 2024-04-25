@@ -50,11 +50,12 @@ static const char* vertex_shader_source =
     "out vec3 vertex_color;\n"
     "out vec2 TexCoord;\n"
     "uniform vec2 shift;\n"
+    "uniform vec2 scale;\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 aColor;\n"
     "layout (location = 2) in vec2 aTexCoord;\n"
     "void main() {\n"
-    "    gl_Position = vec4(aPos.x + shift.x, aPos.y + shift.y, aPos.z, 1.0);\n"
+    "    gl_Position = vec4((aPos.x * scale.x) + shift.x, (aPos.y * scale.y) + shift.y, aPos.z, 1.0);\n"
     "    vertex_color = aColor;\n"
     "    TexCoord = aTexCoord;\n"
     "}\n";
@@ -133,16 +134,43 @@ unsigned int shader_program(const char *vertex_shader_source, const char *fragme
     return program;
 }
 
+Sprite make_sprite(const char* filename)
+{
+    Sprite temp;
+    
+    glGenTextures(1, &temp.texture);
+    glBindTexture(GL_TEXTURE_2D, temp.texture);
+
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+
+    temp.width = width;
+    temp.height = height;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+
+    return temp;
+}
+
 int main()
 {
     init_window(&game.window);
 
+    #if defined(__WIN32__)
+        glewInit();
+    #endif
+
+    stbi_set_flip_vertically_on_load(true);
+
     //make a couple entities
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 10; i++)
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * 640, (rand() / (float)RAND_MAX) * 480 });
+        *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
     }
 
     //make the player entity
@@ -151,10 +179,6 @@ int main()
     }
 
     float last_time = SDL_GetTicks();
-
-    #if defined(__WIN32__)
-        glewInit();
-    #endif
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
@@ -165,35 +189,46 @@ int main()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     
-    float entity_space_size = 0.2;
+    float entity_space_size = 1;
 
     float entity_vertices[] =
     {
-        //form a square, start with top left triangle
+        //four vertices, forms a square
          entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
         -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
         -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-        //bottom right
-         //entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
-         entity_space_size, -entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-       // -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+         entity_space_size, -entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 0.0f,
     };
 
-    unsigned int indices[] =
+    unsigned int entity_indices[] =
     {
         0, 1, 2,
-        1, 2, 3
-    }
+        0, 2, 3,
+    };
 
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
+    float chunk_space_size_x = (chunk_size / game.window.width);
+    float chunk_space_size_y = (chunk_size / game.window.height);
 
-    unsigned int IBO;
-    glGenBuffers(1, &IBO);
+    float chunk_vertices[] =
+    {
+        -chunk_space_size_x,  chunk_space_size_y, 0.0,
+         chunk_space_size_x,  chunk_space_size_y, 0.0,
+         chunk_space_size_x, -chunk_space_size_y, 0.0,
+        -chunk_space_size_x, -chunk_space_size_y, 0.0,
+    };
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //entity data
+    unsigned int entity_vbo;
+    glGenBuffers(1, &entity_vbo);
 
+    unsigned int entity_ebo;
+    glGenBuffers(1, &entity_ebo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -204,18 +239,16 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    //make a texture
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load("magma.jpg", &width, &height, &nrChannels, 0);
+    //chunk buffer
+    unsigned int chunk_vbo;
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    
-    stbi_image_free(data);
+    // glGenBuffers(1, &chunk_vbo);
+
+    // glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
+
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    // glEnableVertexAttribArray(0);
 
     while(game.window.running)
     {
@@ -256,13 +289,6 @@ int main()
 
         update_window(&game.window);
 
-        //move camera
-        float target_x = game.player->position.x; //- game.window.width / 2 //+ game.player->origin.x / 2;
-        float target_y = game.player->position.y; //- game.window.height / 2;
-
-        camera.x = lerp(camera.x, target_x, 0.1);
-        camera.y = lerp(camera.y, target_y, 0.1);
-
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
@@ -270,7 +296,7 @@ int main()
 
             V2i chunk_physical = { current_chunk->index.x * chunk_size, current_chunk->index.y * chunk_size };
 
-            //render here
+            
         }
 
         //entity loop
@@ -288,13 +314,27 @@ int main()
                 int shift_location = glGetUniformLocation(program, "shift");
                 glUniform2f(shift_location, entity_x, entity_y);
 
-                glBindTexture(GL_TEXTURE_2D, texture);
+                float test_scale = entity->sprite.width / game.window.width;
 
-                glDrawArrays(GL_TRIANGLES, 0, 6);
+                float test_scale2 = entity->sprite.height / game.window.height;
+
+                int scale_location = glGetUniformLocation(program, "scale");
+                glUniform2f(scale_location, test_scale, test_scale2);
+
+                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+                
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+
+                glBlendFunc(GL_ONE, GL_ZERO);
             }
         }
 
-        float time = SDL_GetTicks() * 0.01;
+        float time = SDL_GetTicks() * 0.001;
 
         float green_value = (sin(time)) / 2.0f + 0.5f;
 
@@ -306,6 +346,13 @@ int main()
         unsigned int end_time = SDL_GetTicks();
 
         game.delta_time = (end_time - start_time) / 1000.f;
+
+        //move camera
+        float target_x = game.player->position.x; //- game.window.width / 2 //+ game.player->origin.x / 2;
+        float target_y = game.player->position.y; //- game.window.height / 2;
+
+        camera.x = lerp(camera.x, target_x, 0.1);
+        camera.y = lerp(camera.y, target_y, 0.1);
     }
     
     clean_window(&game.window);

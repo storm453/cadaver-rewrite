@@ -44,13 +44,14 @@ void entity_update(Entity* entity)
     }
 }
 
-Entity make_entity(EntityType entityType, Vec2 entityPos)
+Entity make_entity(EntityType entityType, Vec2 entityPos, const char* filename)
 {
     Entity temp = {};
 
     temp.type = entityType;
     temp.position.x = entityPos.x;
     temp.position.y = entityPos.y;
+    temp.sprite = make_sprite(filename);
     
     return temp;
 }

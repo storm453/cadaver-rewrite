@@ -6,8 +6,8 @@
 
 struct Sprite
 {
-    SDL_Surface* sprite;
-    SDL_Texture* texture;
+    unsigned int texture;
+    int width, height;
 };
 
 struct Animation
@@ -18,4 +18,5 @@ struct Animation
     float playback_time;
 };
 
+Sprite make_sprite(const char* filename);
 Sprite* step_animation(Animation* animation, float time_step);
