@@ -63,10 +63,11 @@ static const char* fragment_shader_source =
     "#version 330 core\n"
     "in vec3 vertex_color;\n"
     "in vec2 TexCoord;\n"
+    "out vec4 finalColor;\n"
     "uniform sampler2D ourTexture;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    gl_FragColor = texture(ourTexture, TexCoord) * vec4(vertex_color.x, our_color.y, vertex_color.z, 1.0f);\n"
+    "    finalColor = texture(ourTexture, TexCoord) * vec4(vertex_color.x, our_color.y, vertex_color.z, 1.0f);\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -84,12 +85,47 @@ unsigned int shader_program(const char *vertex_shader_source, const char *fragme
     glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
     glCompileShader(fragment_shader);
 
+    int success;
+
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
+
+    if(!success)
+    {
+        char error_message[1024];
+
+        glGetShaderInfoLog(fragment_shader, sizeof(error_message), NULL, error_message);
+
+        printf("FRAGMENT ERROR %s \n", error_message);
+    }
+
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
+
+    if(!success)
+    {
+        char error_message[1024];
+
+        glGetShaderInfoLog(vertex_shader, sizeof(error_message), NULL, error_message);
+
+        printf("VERTEX ERROR %s \n", error_message);
+    }
+
     program = glCreateProgram();
 
     glAttachShader(program, vertex_shader);
     glAttachShader(program, fragment_shader);
 
     glLinkProgram(program);
+
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    if(!success)
+    {
+        char error_message[1024];
+
+        glGetProgramInfoLog(program, sizeof(error_message), NULL, error_message);
+
+        printf("PROGRAM ERROR %s \n", error_message);
+    }
 
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);  
@@ -116,7 +152,9 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    glewInit();
+    #if defined(__WIN32__)
+        glewInit();
+    #endif
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
@@ -136,13 +174,22 @@ int main()
         -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
         -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
         //bottom right
-         entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
+         //entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
          entity_space_size, -entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    1.0f, 0.0f,
-        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
+       // -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
     };
+
+    unsigned int indices[] =
+    {
+        0, 1, 2,
+        1, 2, 3
+    }
 
     unsigned int VBO;
     glGenBuffers(1, &VBO);
+
+    unsigned int IBO;
+    glGenBuffers(1, &IBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
