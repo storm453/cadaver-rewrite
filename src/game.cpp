@@ -197,7 +197,7 @@ int main()
          entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
         -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
         -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-         entity_space_size, -entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 0.0f,
+         entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f,
     };
 
     unsigned int entity_indices[] =
@@ -211,17 +211,22 @@ int main()
 
     float chunk_vertices[] =
     {
-        -chunk_space_size_x,  chunk_space_size_y, 0.0,
          chunk_space_size_x,  chunk_space_size_y, 0.0,
-         chunk_space_size_x, -chunk_space_size_y, 0.0,
+        -chunk_space_size_x,  chunk_space_size_y, 0.0,
         -chunk_space_size_x, -chunk_space_size_y, 0.0,
+         chunk_space_size_x, -chunk_space_size_y, 0.0,
+    };
+
+    unsigned int chunk_indices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
     };
 
     //entity data
-    unsigned int entity_vbo;
-    glGenBuffers(1, &entity_vbo);
+    unsigned int entity_vbo, entity_ebo;
 
-    unsigned int entity_ebo;
+    glGenBuffers(1, &entity_vbo);
     glGenBuffers(1, &entity_ebo);
 
     glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
@@ -230,25 +235,29 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
     glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+
     //chunk buffer
-    unsigned int chunk_vbo;
+    // unsigned int chunk_vbo, chunk_ebo;
 
     // glGenBuffers(1, &chunk_vbo);
+    // glGenBuffers(1, &chunk_ebo);
 
     // glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
     // glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
+    
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
+    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     // glEnableVertexAttribArray(0);
+
+    Sprite chunk_sprite = make_sprite("magma.png");
 
     while(game.window.running)
     {
@@ -294,9 +303,20 @@ int main()
         {
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { current_chunk->index.x * chunk_size, current_chunk->index.y * chunk_size };
+            V2i chunk_physical = { (current_chunk->index.x * chunk_size * 2), (current_chunk->index.y * chunk_size * 2) };
 
-            
+            float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
+            float chunk_space_y = (-chunk_physical.y + camera.y) / game.window.height;
+
+            int scale_location = glGetUniformLocation(program, "scale");
+            glUniform2f(scale_location, (chunk_size / game.window.width), (chunk_size / game.window.height));
+
+            int shift_location = glGetUniformLocation(program, "shift");
+            glUniform2f(shift_location, chunk_space_x, chunk_space_y);
+
+            glBindTexture(GL_TEXTURE_2D, chunk_sprite.texture);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
 
         //entity loop
@@ -308,26 +328,30 @@ int main()
 
             if(entity->type != entity_none)
             {
+                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+                // glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+                // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+
+                // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+                // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
+                // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+                
                 float entity_x = (entity->position.x - camera.x) / game.window.width;
                 float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
                 int shift_location = glGetUniformLocation(program, "shift");
                 glUniform2f(shift_location, entity_x, entity_y);
 
-                float test_scale = entity->sprite.width / game.window.width;
-
-                float test_scale2 = entity->sprite.height / game.window.height;
+                float entity_scale_x = entity->sprite.width / game.window.width;
+                float entity_scale_y = entity->sprite.height / game.window.height;
 
                 int scale_location = glGetUniformLocation(program, "scale");
-                glUniform2f(scale_location, test_scale, test_scale2);
+                glUniform2f(scale_location, entity_scale_x, entity_scale_y);
 
-                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
-
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
-                
                 glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
                 glBlendFunc(GL_ONE, GL_ZERO);
