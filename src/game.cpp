@@ -278,16 +278,16 @@ int main()
 
     float chunk_vertices[] =
     {
-         chunk_space_size_x,  chunk_space_size_y, 0.0,
-        -chunk_space_size_x,  chunk_space_size_y, 0.0,
-        -chunk_space_size_x, -chunk_space_size_y, 0.0,
-         chunk_space_size_x, -chunk_space_size_y, 0.0,
+        0.0,                    0.0,                0.0,
+        chunk_space_size_x,     0.0,                0.0,
+        0.0,                   -chunk_space_size_y, 0.0,
+        chunk_space_size_x,    -chunk_space_size_y, 0.0,
     };
 
     unsigned int chunk_indices[] =
     {
         0, 1, 2,
-        0, 2, 3,
+        1, 2, 3,
     };
 
     //entity data
@@ -306,23 +306,19 @@ int main()
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-
     //chunk buffer
-    // unsigned int chunk_vbo, chunk_ebo;
+    unsigned int chunk_vbo, chunk_ebo;
 
-    // glGenBuffers(1, &chunk_vbo);
-    // glGenBuffers(1, &chunk_ebo);
+    glGenBuffers(1, &chunk_vbo);
+    glGenBuffers(1, &chunk_ebo);
 
-    // glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
     
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(chunk_indices), chunk_indices, GL_STATIC_DRAW);
 
-    // glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(0);
 
     Sprite ltt_sprite = make_sprite("grass.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
@@ -367,49 +363,64 @@ int main()
 
         update_window(&game.window);
 
+        //reset scale uniform to 1
+        int scale_location = glGetUniformLocation(program, "scale");
+        glUniform2f(scale_location, 1, 1);
+
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { (current_chunk->index.x * chunk_size * 2), (current_chunk->index.y * chunk_size * 2) };
+            V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
+
+            glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
+
+            glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 
             float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
-            float chunk_space_y = (-chunk_physical.y + camera.y) / game.window.height;
-
-            int scale_location = glGetUniformLocation(program, "scale");
-            glUniform2f(scale_location, (chunk_size / game.window.width), (chunk_size / game.window.height));
+            float chunk_space_y = -(chunk_physical.y - camera.y) / game.window.height;
 
             int shift_location = glGetUniformLocation(program, "shift");
             glUniform2f(shift_location, chunk_space_x, chunk_space_y);
 
-            float noise_input_x = current_chunk->index.x;
-            float noise_input_y = current_chunk->index.y;
+            float noise_input_x = current_chunk->index.x + 9999;
+            float noise_input_y = current_chunk->index.y + 9999;
 
             float noise = perlin2d(noise_input_x, noise_input_y, 0.1, 4);
 
-            if(noise > 0.33)
-            {
-                glBindTexture(GL_TEXTURE_2D, gtt_sprite.texture);
-            }
-            else
-            {
-                glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
-            }
-            if(noise > 0.66)
-            {
-                glBindTexture(GL_TEXTURE_2D, gss_sprite.texture);
-            }
-
             int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, 1.0, 1.0, 1.0, 1.0f);
-            
+            glUniform4f(vertex_color_location, noise, 1.0, 1.0, 1.0f);
+
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
 
         float time = SDL_GetTicks() * 0.001;
 
         float green_value = (sin(time)) / 2.0f + 0.5f;
+
+        game.render_amount = 0;
+
+        for(int i = 0; i < game.render_amount; i++)
+        {
+            int closest = i;
+
+            for(int j = i + 1; j < game.render_amount; j++)
+            {
+                if(game.render_entities[closest]->depth < game.render_entities[j]->depth)
+                {
+                    closest = j;
+                }
+            }
+
+            Entity* oldEntity = game.render_entities[closest];
+
+            game.render_entities[closest] = game.render_entities[i];
+            game.render_entities[i] = oldEntity;
+        }
 
         //entity loop
         for(int i = 0; i < max_entity_count; i++)
@@ -425,12 +436,12 @@ int main()
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                // glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
-                // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+                glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
-                // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-                // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
-                // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
+                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
                 
                 float entity_x = (entity->position.x - camera.x) / game.window.width;
                 float entity_y = (-entity->position.y + camera.y) / game.window.height;
@@ -460,11 +471,11 @@ int main()
         game.delta_time = (end_time - start_time) / 1000.f;
 
         //move camera
-        float target_x = game.player->position.x; //- game.window.width / 2 //+ game.player->origin.x / 2;
-        float target_y = game.player->position.y; //- game.window.height / 2;
+        float target_x = game.player->position.x;
+        float target_y = game.player->position.y;
 
-        camera.x = lerp(camera.x, target_x, 0.1);
-        camera.y = lerp(camera.y, target_y, 0.1);
+        camera.x = lerp(camera.x, target_x, 0.05);
+        camera.y = lerp(camera.y, target_y, 0.05);
     }
     
     clean_window(&game.window);
