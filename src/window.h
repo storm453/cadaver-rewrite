@@ -15,10 +15,13 @@ struct Window
     {
         float mouseX;
         float mouseY;
+        float wheel_value;
+        float wheel;
         bool w;
         bool a;
         bool s;
         bool d;
+        bool l;
         bool shift;
     }input;
 };

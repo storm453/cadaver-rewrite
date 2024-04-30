@@ -46,22 +46,20 @@ Chunk chunks_array[999];
 
 static const char* vertex_shader_source =
     "#version 330 core\n"
-    "out vec3 vertex_color;\n"
     "out vec2 TexCoord;\n"
     "uniform vec2 shift;\n"
     "uniform vec2 scale;\n"
+    "uniform float zoom;\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 aColor;\n"
     "layout (location = 2) in vec2 aTexCoord;\n"
     "void main() {\n"
-    "    gl_Position = vec4((aPos.x * scale.x) + shift.x, (aPos.y * scale.y) + shift.y, aPos.z, 1.0);\n"
-    "    vertex_color = aColor;\n"
+    "    gl_Position = vec4( ( (aPos.x * scale.x) + shift.x ) * zoom, ( (aPos.y * scale.y) + shift.y ) * zoom, aPos.z, 1.0);\n"
     "    TexCoord = aTexCoord;\n"
     "}\n";
 
 static const char* fragment_shader_source =
     "#version 330 core\n"
-    "in vec3 vertex_color;\n"
     "in vec2 TexCoord;\n"
     "out vec4 finalColor;\n"
     "uniform sampler2D ourTexture;\n"
@@ -324,8 +322,19 @@ int main()
     Sprite gtt_sprite = make_sprite("grass2.png");
     Sprite gss_sprite = make_sprite("ground3.png");
 
+    float zoom = 1;
+
     while(game.window.running)
     {
+        if(game.window.input.wheel)
+        {
+            zoom += 0.1 * (game.window.input.wheel_value / 1);
+            game.window.input.wheel = false;
+        }
+
+        int zoom_location = glGetUniformLocation(program, "zoom");
+        glUniform1f(zoom_location, zoom);
+
         //set screen color
         glClearColor(0.81f, 0.75f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -384,18 +393,18 @@ int main()
             float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
             float chunk_space_y = -(chunk_physical.y - camera.y) / game.window.height;
 
-            int shift_location = glGetUniformLocation(program, "shift");
-            glUniform2f(shift_location, chunk_space_x, chunk_space_y);
-
             float noise_input_x = current_chunk->index.x + 9999;
             float noise_input_y = current_chunk->index.y + 9999;
 
             float noise = perlin2d(noise_input_x, noise_input_y, 0.1, 4);
 
             int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, noise, 1.0, 1.0, 1.0f);
+            glUniform4f(vertex_color_location, noise, noise, noise, 1.0);
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+            int shift_location = glGetUniformLocation(program, "shift");
+            glUniform2f(shift_location, chunk_space_x, chunk_space_y);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);\
         }
 
         float time = SDL_GetTicks() * 0.001;
@@ -404,64 +413,63 @@ int main()
 
         game.render_amount = 0;
 
-        for(int i = 0; i < game.render_amount; i++)
-        {
-            int closest = i;
-
-            for(int j = i + 1; j < game.render_amount; j++)
-            {
-                if(game.render_entities[closest]->depth < game.render_entities[j]->depth)
-                {
-                    closest = j;
-                }
-            }
-
-            Entity* oldEntity = game.render_entities[closest];
-
-            game.render_entities[closest] = game.render_entities[i];
-            game.render_entities[i] = oldEntity;
-        }
-
-        //entity loop
         for(int i = 0; i < max_entity_count; i++)
         {
             Entity* entity = &game.entities[i];
 
+            if(entity->type == entity_none) continue;
+
             entity_update(entity);
 
-            if(entity->type != entity_none)
+            if(entity->render)
             {
-                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+                game.render_entities[game.render_amount] = entity;
 
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-                glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
-
-                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
-                glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-                
-                float entity_x = (entity->position.x - camera.x) / game.window.width;
-                float entity_y = (-entity->position.y + camera.y) / game.window.height;
-
-                int shift_location = glGetUniformLocation(program, "shift");
-                glUniform2f(shift_location, entity_x, entity_y);
-
-                float entity_scale_x = entity->sprite.width / game.window.width;
-                float entity_scale_y = entity->sprite.height / game.window.height;
-
-                int scale_location = glGetUniformLocation(program, "scale");
-                glUniform2f(scale_location, entity_scale_x, entity_scale_y);
-
-                int vertex_color_location = glGetUniformLocation(program, "our_color");
-                glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
-
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
-
-                glBlendFunc(GL_ONE, GL_ZERO);
+                game.render_amount++;
             }
+        }
+
+        //make a sorting algorithm and sort using game.render_entities[x]->depth
+        for(int i = 0; i < game.render_amount; i++)
+        {
+            
+        }
+
+        //entity loop
+        for(int i = 0; i < game.render_amount; i++)
+        {
+            Entity* entity = game.render_entities[i];
+
+            glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+            
+            float entity_x = (entity->position.x - camera.x) / game.window.width;
+            float entity_y = (-entity->position.y + camera.y) / game.window.height;
+
+            int shift_location = glGetUniformLocation(program, "shift");
+            glUniform2f(shift_location, entity_x, entity_y);
+
+            float entity_scale_x = entity->sprite.width / game.window.width;
+            float entity_scale_y = entity->sprite.height / game.window.height;
+
+            int scale_location = glGetUniformLocation(program, "scale");
+            glUniform2f(scale_location, entity_scale_x, entity_scale_y);
+
+            int vertex_color_location = glGetUniformLocation(program, "our_color");
+            glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+
+            glBlendFunc(GL_ONE, GL_ZERO);
         }
 
         SDL_GL_SwapWindow(game.window.window);

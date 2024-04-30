@@ -34,6 +34,7 @@ void update_window(Window* window)
             if(ev.key.keysym.sym == SDLK_a) window->input.a = true;
             if(ev.key.keysym.sym == SDLK_s) window->input.s = true;
             if(ev.key.keysym.sym == SDLK_d) window->input.d = true;
+            if(ev.key.keysym.sym == SDLK_l) window->input.l = true;
             if(ev.key.keysym.sym == SDLK_LSHIFT) window->input.shift = true;
 
             if(ev.key.keysym.sym == SDLK_ESCAPE) window->running = false;
@@ -44,12 +45,18 @@ void update_window(Window* window)
             if(ev.key.keysym.sym == SDLK_a) window->input.a = false;
             if(ev.key.keysym.sym == SDLK_s) window->input.s = false;
             if(ev.key.keysym.sym == SDLK_d) window->input.d = false;
+            if(ev.key.keysym.sym == SDLK_l) window->input.l = false;
             if(ev.key.keysym.sym == SDLK_LSHIFT) window->input.shift = false;
         }
         if(ev.type == SDL_MOUSEMOTION)
         {
             window->input.mouseX = ev.motion.x;
             window->input.mouseY = ev.motion.y;
+        }
+        if(ev.type == SDL_MOUSEWHEEL)
+        {
+            window->input.wheel = true;
+            window->input.wheel_value = ev.wheel.y;
         }
     }
 }
