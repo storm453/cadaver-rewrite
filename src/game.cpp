@@ -4,6 +4,10 @@
 #include <SDL.h>
 #include <iostream>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 //silence
 #define GL_SILENCE_DEPRECATION
 
