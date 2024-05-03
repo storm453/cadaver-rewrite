@@ -3,6 +3,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <iostream>
+#include <chrono>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -55,8 +56,7 @@ static const char* vertex_shader_source =
     "uniform vec2 scale;\n"
     "uniform float zoom;\n"
     "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec3 aColor;\n"
-    "layout (location = 2) in vec2 aTexCoord;\n"
+    "layout (location = 1) in vec2 aTexCoord;\n"
     "void main() {\n"
     "    gl_Position = vec4( ( (aPos.x * scale.x) + shift.x ) * zoom, ( (aPos.y * scale.y) + shift.y ) * zoom, aPos.z, 1.0);\n"
     "    TexCoord = aTexCoord;\n"
@@ -157,7 +157,7 @@ Sprite make_sprite(const char* filename)
 }
 
 //NOISE FUNCTION
-static int SEED = 0;
+static int SEED = std::time(0);
 
 static int hash[] = {208,34,231,213,32,248,233,56,161,78,24,140,71,48,140,254,245,255,247,247,40,
                      185,248,251,245,28,124,204,204,76,36,1,107,28,234,163,202,224,245,128,167,204,
@@ -263,10 +263,10 @@ int main()
     float entity_vertices[] =
     {
         //four vertices, forms a square
-         entity_space_size,  entity_space_size, 0.0,    1.0f, 0.0f, 0.0f,    1.0f, 1.0f,
-        -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f, 0.0f,    0.0f, 1.0f,
-        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f,
-         entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f,
+         entity_space_size,  entity_space_size, 0.0,    1.0f, 1.0f,
+        -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f,
+        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f,
+         entity_space_size, -entity_space_size, 0.0,    1.0f, 0.0f,
     };
 
     unsigned int entity_indices[] =
@@ -280,10 +280,10 @@ int main()
 
     float chunk_vertices[] =
     {
-        0.0,                    0.0,                0.0,
-        chunk_space_size_x,     0.0,                0.0,
-        0.0,                   -chunk_space_size_y, 0.0,
-        chunk_space_size_x,    -chunk_space_size_y, 0.0,
+        0.0,                    0.0,                0.0,    0.0f, 1.0f,
+        chunk_space_size_x,     0.0,                0.0,    1.0f, 1.0f,
+        0.0,                   -chunk_space_size_y, 0.0,    0.0f, 0.0f,
+        chunk_space_size_x,    -chunk_space_size_y, 0.0,    1.0f, 0.0f,
     };
 
     unsigned int chunk_indices[] =
@@ -304,10 +304,6 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
-
     //chunk buffer
     unsigned int chunk_vbo, chunk_ebo;
 
@@ -320,7 +316,12 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(chunk_indices), chunk_indices, GL_STATIC_DRAW);
 
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+    //enable attrib arrays
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
 
     Sprite ltt_sprite = make_sprite("grass.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
@@ -392,7 +393,8 @@ int main()
             glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
             float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
             float chunk_space_y = -(chunk_physical.y - camera.y) / game.window.height;
@@ -403,12 +405,12 @@ int main()
             float noise = perlin2d(noise_input_x, noise_input_y, 0.1, 4);
 
             int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, noise, noise, noise, 1.0);
+            glUniform4f(vertex_color_location, noise, noise, 1.0, 1.0);
 
             int shift_location = glGetUniformLocation(program, "shift");
             glUniform2f(shift_location, chunk_space_x, chunk_space_y);
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);\
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
 
         float time = SDL_GetTicks() * 0.001;
@@ -452,10 +454,9 @@ int main()
             glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3* sizeof(float)));
-            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-            
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
             float entity_x = (entity->position.x - camera.x) / game.window.width;
             float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
