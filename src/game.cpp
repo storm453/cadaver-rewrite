@@ -52,14 +52,14 @@ Chunk chunks_array[999];
 static const char* vertex_shader_source =
     "#version 330 core\n"
     "out vec2 TexCoord;\n"
-    "uniform vec2 shift;\n"
-    "uniform vec2 scale;\n"
-    "uniform float zoom;\n"
+    "uniform mat4 model;\n"
+    "uniform mat4 view;\n"
+    "uniform mat4 projection;\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec2 aTexCoord;\n"
     "void main() {\n"
-    "    gl_Position = vec4( ( (aPos.x * scale.x) + shift.x ) * zoom, ( (aPos.y * scale.y) + shift.y ) * zoom, aPos.z, 1.0);\n"
-    "    TexCoord = aTexCoord;\n"
+    "   gl_Position = projection * view * model * vec4(aPos, 1.0f);\n"
+    "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
     "}\n";
 
 static const char* fragment_shader_source =
@@ -292,6 +292,50 @@ int main()
         1, 2, 3,
     };
 
+    float cube_vertices[] = {
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+};
+
     //entity data
     unsigned int entity_vbo, entity_ebo;
 
@@ -315,11 +359,18 @@ int main()
     
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(chunk_indices), chunk_indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
     //enable attrib arrays
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    //cube data
+    unsigned int cube_vbo;
+
+    glGenBuffers(1, &cube_vbo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
@@ -327,18 +378,18 @@ int main()
     Sprite gtt_sprite = make_sprite("grass2.png");
     Sprite gss_sprite = make_sprite("ground3.png");
 
+    Sprite magma_sprite = make_sprite("magma.png");
+
     float zoom = 1;
 
     while(game.window.running)
     {
+        
         if(game.window.input.wheel)
         {
             zoom += 0.1 * (game.window.input.wheel_value / 1);
             game.window.input.wheel = false;
         }
-
-        int zoom_location = glGetUniformLocation(program, "zoom");
-        glUniform1f(zoom_location, zoom);
 
         //set screen color
         glClearColor(0.81f, 0.75f, 0.8f, 1.0f);
@@ -407,8 +458,21 @@ int main()
             int vertex_color_location = glGetUniformLocation(program, "our_color");
             glUniform4f(vertex_color_location, noise, noise, 1.0, 1.0);
 
-            int shift_location = glGetUniformLocation(program, "shift");
-            glUniform2f(shift_location, chunk_space_x, chunk_space_y);
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::scale(model, glm::vec3(zoom, zoom, 0.0f));
+            model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
+
+            glm::mat4 view = glm::mat4(1.0f);
+            glm::mat4 projection = glm::mat4(1.0f);
+
+            unsigned int model_location = glGetUniformLocation(program, "model");
+            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+
+            unsigned int view_location = glGetUniformLocation(program, "view");
+            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+
+            unsigned int projection_location = glGetUniformLocation(program, "projection");
+            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
@@ -438,7 +502,7 @@ int main()
         //make a sorting algorithm and sort using game.render_entities[x]->depth
         for(int i = 0; i < game.render_amount; i++)
         {
-            
+
         }
 
         //entity loop
@@ -460,23 +524,74 @@ int main()
             float entity_x = (entity->position.x - camera.x) / game.window.width;
             float entity_y = (-entity->position.y + camera.y) / game.window.height;
 
-            int shift_location = glGetUniformLocation(program, "shift");
-            glUniform2f(shift_location, entity_x, entity_y);
-
             float entity_scale_x = entity->sprite.width / game.window.width;
             float entity_scale_y = entity->sprite.height / game.window.height;
 
-            int scale_location = glGetUniformLocation(program, "scale");
-            glUniform2f(scale_location, entity_scale_x, entity_scale_y);
-
             int vertex_color_location = glGetUniformLocation(program, "our_color");
             glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
+
+            //transformation matrix
+            glm::mat4 model = glm::mat4(1.0f);
+            
+            model = glm::scale(model, glm::vec3(zoom, zoom, 0.0f));
+            model = glm::translate(model, glm::vec3(entity_x, entity_y, 0.0f));
+            model = glm::scale(model, glm::vec3(entity_scale_x, entity_scale_y, 0.0f)); 
+
+            glm::mat4 view = glm::mat4(1.0f);
+            glm::mat4 projection = glm::mat4(1.0f);
+            
+            unsigned int model_location = glGetUniformLocation(program, "model");
+            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+
+            unsigned int view_location = glGetUniformLocation(program, "view");
+            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+
+            unsigned int projection_location = glGetUniformLocation(program, "projection");
+            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
             glBlendFunc(GL_ONE, GL_ZERO);
         }
 
+        //draw 3d stuff
+        glBindTexture(GL_TEXTURE_2D, magma_sprite.texture);
+
+        glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        
+        //model matrix
+        glm::mat4 model = glm::mat4(1.0f);
+
+        float angle = SDL_GetTicks() * 0.001;
+
+        model = glm::rotate(model, glm::radians(angle * 50.0f), glm::vec3(1.0f, 0.5f, 0.0f)); 
+
+        //view matrix
+        glm::mat4 view = glm::mat4(1.0f);
+
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+
+        //projection matrix
+        glm::mat4 projection = glm::mat4(1.0f);
+
+        projection = glm::perspective(glm::radians(45.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+
+        //send to vertex shader
+        unsigned int model_location = glGetUniformLocation(program, "model");
+        glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+
+        unsigned int view_location = glGetUniformLocation(program, "view");
+        glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+
+        unsigned int projection_location = glGetUniformLocation(program, "projection");
+        glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+        
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        //render
         SDL_GL_SwapWindow(game.window.window);
     
         unsigned int end_time = SDL_GetTicks();
