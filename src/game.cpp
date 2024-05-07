@@ -463,7 +463,12 @@ int main()
             model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
 
             glm::mat4 view = glm::mat4(1.0f);
+
+            //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -1.0f));
+
             glm::mat4 projection = glm::mat4(1.0f);
+            
+            //projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
 
             unsigned int model_location = glGetUniformLocation(program, "model");
             glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -473,6 +478,7 @@ int main()
 
             unsigned int projection_location = glGetUniformLocation(program, "projection");
             glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+            
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
@@ -538,7 +544,12 @@ int main()
             model = glm::scale(model, glm::vec3(entity_scale_x, entity_scale_y, 0.0f)); 
 
             glm::mat4 view = glm::mat4(1.0f);
+
+            //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -1.0f)); 
+
             glm::mat4 projection = glm::mat4(1.0f);
+
+            //projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
             
             unsigned int model_location = glGetUniformLocation(program, "model");
             glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -577,7 +588,7 @@ int main()
         //projection matrix
         glm::mat4 projection = glm::mat4(1.0f);
 
-        projection = glm::perspective(glm::radians(45.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
 
         //send to vertex shader
         unsigned int model_location = glGetUniformLocation(program, "model");
@@ -588,8 +599,14 @@ int main()
 
         unsigned int projection_location = glGetUniformLocation(program, "projection");
         glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
-        
+
+        glEnable(GL_DEPTH_TEST);
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glDisable(GL_DEPTH_TEST);
 
         //render
         SDL_GL_SwapWindow(game.window.window);
