@@ -382,9 +382,27 @@ int main()
 
     float zoom = 1;
 
+    Animation player_idle;
+
+    player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
+    player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
+    player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
+    player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
+    player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
+    player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
+    player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
+    player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
+    player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
+    player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
+
+    player_idle.frame_count = 10;
+    player_idle.frame_rate = 0.1;
+
+    game.player->animation = player_idle;
+    game.player->animation_enabled = true;
+
     while(game.window.running)
     {
-        
         if(game.window.input.wheel)
         {
             zoom += 0.1 * (game.window.input.wheel_value / 1);
@@ -516,7 +534,14 @@ int main()
         {
             Entity* entity = game.render_entities[i];
 
-            glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+            if(entity->animation_enabled)
+            {
+                glBindTexture(GL_TEXTURE_2D, step_animation(&entity->animation, game.delta_time)->texture);
+            }
+            else
+            {
+                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+            }
 
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -604,7 +629,7 @@ int main()
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glDisable(GL_DEPTH_TEST);
 
