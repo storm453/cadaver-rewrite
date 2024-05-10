@@ -69,8 +69,19 @@ static const char* fragment_shader_source =
     "uniform sampler2D ourTexture;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    finalColor = texture(ourTexture, TexCoord) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
+    "    finalColor = texture(ourTexture, vec2(TexCoord.x, TexCoord.y)) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
     "}\n";
+
+static const char* lmars_fragment_source =
+     "#version 330 core\n"
+    "in vec2 TexCoord;\n"
+    "out vec4 finalColor;\n"
+    "uniform sampler2D ourTexture;\n"
+    "uniform vec4 our_color;\n"
+    "uniform int tile;\n"
+    "void main() {\n"
+    "    finalColor = texture(ourTexture, vec2(TexCoord.x + (0.25 * tile), TexCoord.y)) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
+    "}\n";  
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
@@ -432,12 +443,13 @@ int main()
                     if(new_chunk != NULL)
                     {
                         new_chunk->index = loop_chunk_index;
+                        new_chunk->noise = perlin2d(loop_chunk_index.x + 99999, loop_chunk_index.y + 99999, 0.1, 4);
                         new_chunk->exists = true;
                     }
                 }
                 else
                 {
-                    //chunk does exist, so move it to the top of the array
+                    //DO THIS LALREADY BRUH
                 }
             }
         }
@@ -468,13 +480,8 @@ int main()
             float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
             float chunk_space_y = -(chunk_physical.y - camera.y) / game.window.height;
 
-            float noise_input_x = current_chunk->index.x + 9999;
-            float noise_input_y = current_chunk->index.y + 9999;
-
-            float noise = perlin2d(noise_input_x, noise_input_y, 0.1, 4);
-
             int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, noise, noise, 1.0, 1.0);
+            glUniform4f(vertex_color_location, current_chunk->noise, current_chunk->noise, 1.0, 1.0);
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::scale(model, glm::vec3(zoom, zoom, 0.0f));
@@ -629,7 +636,7 @@ int main()
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glDisable(GL_DEPTH_TEST);
 

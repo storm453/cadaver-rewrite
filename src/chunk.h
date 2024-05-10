@@ -22,6 +22,7 @@ struct Chunk
     Tile tiles[chunk_tiles * chunk_tiles];
     V2i index;
     bool exists = false;
+    float noise;
 };
 //x + y * width for index in array of tile
 
