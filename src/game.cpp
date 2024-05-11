@@ -85,7 +85,7 @@ static const char* lmars_fragment_source =
 
 
 
-unsigned int shader_program(char *vertex_shader_source, const char *fragment_shader_source) 
+unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
     unsigned int program, vertex_shader, fragment_shader;
 
@@ -155,11 +155,16 @@ Sprite make_sprite(const char* filename)
     glGenTextures(1, &temp.texture);
     glBindTexture(GL_TEXTURE_2D, temp.texture);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     int width, height, nrChannels;
     unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
 
     temp.width = width;
     temp.height = height;
+
+    std::cout << "Width " << temp.width << " " << "Width " << temp.height << "\n";
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -265,24 +270,7 @@ int main()
         game.player = make_player();
     }
 
-    float last_time = SDL_GetTicks();
-
-    FILE* test = fopen("src/vertex.glsl", "rb");
-
-    fseek(test, 0, SEEK_END);
-
-    int vertex_length = ftell(test);
-
-    fseek(test, 0, SEEK_SET);
-
-    char* hi = (char*)malloc(vertex_length);
-
-    fread(hi, vertex_length, 1, test);
-
-    fclose(test);
-    
-    
-    unsigned int program = shader_program(hi, fragment_shader_source);
+    unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
 
     glUseProgram(program);
     
@@ -438,7 +426,7 @@ int main()
     {
         if(game.window.input.wheel)
         {
-            zoom += 0.1 * (game.window.input.wheel_value / 1);
+            zoom += 0.05 * (game.window.input.wheel_value / 1);
             game.window.input.wheel = false;
         }
 
@@ -482,8 +470,8 @@ int main()
 
         // projection
         glm::mat4 projection = glm::mat4(1.0f);
-        // projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
-        projection = glm::ortho(-100.0f * game.window.width / game.window.height, 100.0f * game.window.width / game.window.height, -100.0f, 100.0f, -1000.0f, 1000.0f);
+        projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+        //projection = glm::ortho(-100.0f * game.window.width / game.window.height, 100.0f * game.window.width / game.window.height, -100.0f, 100.0f, -1000.0f, 1000.0f);
         projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f)); //zoooom
 
         //render chunks
@@ -508,9 +496,6 @@ int main()
             glUniform4f(vertex_color_location, current_chunk->noise, current_chunk->noise, 1.0, 1.0);
 
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::rotate(model, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            
             model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
 
             glm::mat4 view = glm::mat4(1.0f);
@@ -562,12 +547,23 @@ int main()
         {
             Entity* entity = game.render_entities[i];
 
+            float entity_scale_x;
+            float entity_scale_y;
+
             if(entity->animation_enabled)
             {
-                glBindTexture(GL_TEXTURE_2D, step_animation(&entity->animation, game.delta_time)->texture);
+                Sprite* current_frame = step_animation(&entity->animation, game.delta_time);
+
+                entity_scale_x = current_frame->width;
+                entity_scale_y = current_frame->height;
+
+                glBindTexture(GL_TEXTURE_2D, current_frame->texture);
             }
             else
             {
+                entity_scale_x = entity->sprite.width;
+                entity_scale_y = entity->sprite.height;
+
                 glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
             }
 
@@ -583,13 +579,9 @@ int main()
             float entity_x = (entity->position.x);
             float entity_y = (entity->position.y);
 
-            float entity_scale_x = entity->sprite.width;
-            float entity_scale_y = entity->sprite.height;
-
             int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
+            glUniform4f(vertex_color_location, 0.41f, green_value, 0.53f, 1.0f);
 
-            //transformation matrix
             glm::mat4 model = glm::mat4(1.0f);
             
             model = glm::translate(model, glm::vec3(entity_x, entity_y, 0.0f));
