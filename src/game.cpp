@@ -83,7 +83,9 @@ static const char* lmars_fragment_source =
     "    finalColor = texture(ourTexture, vec2(TexCoord.x + (0.25 * tile), TexCoord.y)) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
     "}\n";  
 
-unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
+
+
+unsigned int shader_program(char *vertex_shader_source, const char *fragment_shader_source) 
 {
     unsigned int program, vertex_shader, fragment_shader;
 
@@ -235,6 +237,11 @@ float perlin2d(float x, float y, float freq, int depth)
     return fin/div;
 }
 
+glm::mat4 camera_view_matrix(const Camera* my_camera)
+{  
+    return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
+}
+
 int main()
 {
     init_window(&game.window);
@@ -260,7 +267,22 @@ int main()
 
     float last_time = SDL_GetTicks();
 
-    unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
+    FILE* test = fopen("src/vertex.glsl", "rb");
+
+    fseek(test, 0, SEEK_END);
+
+    int vertex_length = ftell(test);
+
+    fseek(test, 0, SEEK_SET);
+
+    char* hi = (char*)malloc(vertex_length);
+
+    fread(hi, vertex_length, 1, test);
+
+    fclose(test);
+    
+    
+    unsigned int program = shader_program(hi, fragment_shader_source);
 
     glUseProgram(program);
     
@@ -286,8 +308,8 @@ int main()
         0, 2, 3,
     };
 
-    float chunk_space_size_x = (chunk_size / game.window.width);
-    float chunk_space_size_y = (chunk_size / game.window.height);
+    float chunk_space_size_x = (chunk_size);
+    float chunk_space_size_y = (chunk_size);
 
     float chunk_vertices[] =
     {
@@ -391,7 +413,7 @@ int main()
 
     Sprite magma_sprite = make_sprite("magma.png");
 
-    float zoom = 1;
+    float zoom = 0.1;
 
     Animation player_idle;
 
@@ -458,9 +480,11 @@ int main()
 
         update_window(&game.window);
 
-        //reset scale uniform to 1
-        int scale_location = glGetUniformLocation(program, "scale");
-        glUniform2f(scale_location, 1, 1);
+        // projection
+        glm::mat4 projection = glm::mat4(1.0f);
+        // projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+        projection = glm::ortho(-100.0f * game.window.width / game.window.height, 100.0f * game.window.width / game.window.height, -100.0f, 100.0f, -1000.0f, 1000.0f);
+        projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f)); //zoooom
 
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
@@ -477,23 +501,21 @@ int main()
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-            float chunk_space_x = (chunk_physical.x - camera.x) / game.window.width;
-            float chunk_space_y = -(chunk_physical.y - camera.y) / game.window.height;
+            float chunk_space_x = (chunk_physical.x);
+            float chunk_space_y = (chunk_physical.y);
 
             int vertex_color_location = glGetUniformLocation(program, "our_color");
             glUniform4f(vertex_color_location, current_chunk->noise, current_chunk->noise, 1.0, 1.0);
 
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::scale(model, glm::vec3(zoom, zoom, 0.0f));
+            model = glm::rotate(model, glm::radians(15.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            
             model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
 
             glm::mat4 view = glm::mat4(1.0f);
 
-            //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -1.0f));
-
-            glm::mat4 projection = glm::mat4(1.0f);
-            
-            //projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+            view = camera_view_matrix(&camera);
 
             unsigned int model_location = glGetUniformLocation(program, "model");
             glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -503,7 +525,6 @@ int main()
 
             unsigned int projection_location = glGetUniformLocation(program, "projection");
             glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
-            
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
@@ -559,11 +580,11 @@ int main()
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-            float entity_x = (entity->position.x - camera.x) / game.window.width;
-            float entity_y = (-entity->position.y + camera.y) / game.window.height;
+            float entity_x = (entity->position.x);
+            float entity_y = (entity->position.y);
 
-            float entity_scale_x = entity->sprite.width / game.window.width;
-            float entity_scale_y = entity->sprite.height / game.window.height;
+            float entity_scale_x = entity->sprite.width;
+            float entity_scale_y = entity->sprite.height;
 
             int vertex_color_location = glGetUniformLocation(program, "our_color");
             glUniform4f(vertex_color_location, 0.41, green_value, 0.53, 1.0f);
@@ -571,18 +592,11 @@ int main()
             //transformation matrix
             glm::mat4 model = glm::mat4(1.0f);
             
-            model = glm::scale(model, glm::vec3(zoom, zoom, 0.0f));
             model = glm::translate(model, glm::vec3(entity_x, entity_y, 0.0f));
-            model = glm::scale(model, glm::vec3(entity_scale_x, entity_scale_y, 0.0f)); 
+            model = glm::scale(model, glm::vec3(entity_scale_x, entity_scale_y, 1.0));
+        
+            glm::mat4 view = camera_view_matrix(&camera);
 
-            glm::mat4 view = glm::mat4(1.0f);
-
-            //view = glm::translate(view, glm::vec3(0.0f, 0.0f, -1.0f)); 
-
-            glm::mat4 projection = glm::mat4(1.0f);
-
-            //projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
-            
             unsigned int model_location = glGetUniformLocation(program, "model");
             glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
 
@@ -617,11 +631,6 @@ int main()
 
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-        //projection matrix
-        glm::mat4 projection = glm::mat4(1.0f);
-
-        projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
-
         //send to vertex shader
         unsigned int model_location = glGetUniformLocation(program, "model");
         glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
@@ -636,7 +645,7 @@ int main()
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        //glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glDisable(GL_DEPTH_TEST);
 
@@ -645,14 +654,14 @@ int main()
     
         unsigned int end_time = SDL_GetTicks();
 
-        game.delta_time = (end_time - start_time) / 1000.f;
+        game.delta_time = (end_time - start_time) / 1000.0f;
 
         //move camera
         float target_x = game.player->position.x;
         float target_y = game.player->position.y;
 
-        camera.x = lerp(camera.x, target_x, 0.05);
-        camera.y = lerp(camera.y, target_y, 0.05);
+        camera.pos.x = lerp(camera.pos.x, target_x, 0.05);
+        camera.pos.y = lerp(camera.pos.y, target_y, 0.05);
     }
     
     clean_window(&game.window);
