@@ -18,7 +18,7 @@ struct Camera
 {
     glm::vec2 pos = { 0, 0 };
     glm::mat4 projection = glm::mat4(1.0f);
-    float zoom = 0.1;
+    float zoom = 2;
 };
 
 Sprite make_sprite(const char* filename);

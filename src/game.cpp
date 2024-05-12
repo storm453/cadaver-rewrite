@@ -73,17 +73,14 @@ static const char* fragment_shader_source =
     "}\n";
 
 static const char* lmars_fragment_source =
-     "#version 330 core\n"
+    "#version 330 core\n"
     "in vec2 TexCoord;\n"
     "out vec4 finalColor;\n"
     "uniform sampler2D ourTexture;\n"
-    "uniform vec4 our_color;\n"
-    "uniform int tile;\n"
+    "uniform sampler2D tileTexture;\n"
     "void main() {\n"
-    "    finalColor = texture(ourTexture, vec2(TexCoord.x + (0.25 * tile), TexCoord.y)) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
-    "}\n";  
-
-
+    "    finalColor = texture(tileTexture, vec2(TexCoord.x, TexCoord.y)) * vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
@@ -163,8 +160,6 @@ Sprite make_sprite(const char* filename)
 
     temp.width = width;
     temp.height = height;
-
-    std::cout << "Width " << temp.width << " " << "Width " << temp.height << "\n";
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -255,10 +250,8 @@ int main()
         glewInit();
     #endif
 
-    stbi_set_flip_vertically_on_load(true);
-
     //make a couple entities
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 100; i++)
     {
         Entity* entity = &game.entities[find_free_entity()];
 
@@ -271,6 +264,8 @@ int main()
     }
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
+
+    unsigned int chunk_program = shader_program(vertex_shader_source, lmars_fragment_source);
 
     glUseProgram(program);
     
@@ -395,13 +390,13 @@ int main()
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    Sprite ltt_sprite = make_sprite("grass.png");
+    Sprite ltt_sprite = make_sprite("sand32.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
     Sprite gss_sprite = make_sprite("ground3.png");
 
     Sprite magma_sprite = make_sprite("magma.png");
 
-    float zoom = 0.1;
+    float zoom = 0.5;
 
     Animation player_idle;
 
@@ -421,6 +416,13 @@ int main()
 
     game.player->animation = player_idle;
     game.player->animation_enabled = true;
+
+    //chunk texture
+    unsigned int tile_texture;
+    glGenTextures(1, &tile_texture);
+    glBindTexture(GL_TEXTURE_2D, tile_texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
 
     while(game.window.running)
     {
@@ -452,9 +454,42 @@ int main()
                     
                     if(new_chunk != NULL)
                     {
+                        float noise_x = loop_chunk_index.x + 99999;
+                        float noise_y = loop_chunk_index.y + 99999;
+
                         new_chunk->index = loop_chunk_index;
-                        new_chunk->noise = perlin2d(loop_chunk_index.x + 99999, loop_chunk_index.y + 99999, 0.1, 4);
                         new_chunk->exists = true;
+
+                        glBindTexture(GL_TEXTURE_2D, tile_texture);
+
+                        //tiles
+                        for(int k = 0; k < chunk_tiles * chunk_tiles; k++)
+                        {
+                            int tile_x = k % chunk_tiles;
+                            int tile_y = floor(k / chunk_tiles);
+
+                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.001, 4);
+
+                            TileType tile;
+
+                            if(tile_noise > 0 && tile_noise < 0.15)
+                            {
+                                tile = tile_water;
+                            }
+                            else if(tile_noise > 0.15 && tile_noise < 0.3)
+                            {
+                                tile = tile_dirt;
+                            }
+                            else if(tile_noise > 0.3)
+                            {
+                                tile = tile_grass;
+                            }
+
+                            glTexSubImage2D(GL_TEXTURE_2D, 0, tile_x, tile_y, chunk_tiles, chunk_tiles, GL_RED, GL_INT, &tile);
+                            
+                            // new_chunk->tiles[k].brightness = tile_noise;
+                            // new_chunk->tiles[k].type = tile;
+                        }
                     }
                 }
                 else
@@ -471,8 +506,11 @@ int main()
         // projection
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+        projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
         //projection = glm::ortho(-100.0f * game.window.width / game.window.height, 100.0f * game.window.width / game.window.height, -100.0f, 100.0f, -1000.0f, 1000.0f);
         projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f)); //zoooom
+
+        glUseProgram(chunk_program);
 
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
@@ -481,7 +519,16 @@ int main()
 
             V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
 
+            int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
+            int sampler1_location = glGetUniformLocation(chunk_program, "tileSampler");
+
+            glUniform1i(sampler0_location, 0);
+
             glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
+
+            glUniform1i(sampler1_location, 1);
+
+            glBindTexture(GL_TEXTURE_2D, tile_texture);
 
             glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
@@ -492,27 +539,35 @@ int main()
             float chunk_space_x = (chunk_physical.x);
             float chunk_space_y = (chunk_physical.y);
 
-            int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, current_chunk->noise, current_chunk->noise, 1.0, 1.0);
+            //for(int i = 0; i < chunk_tiles * chunk_tiles; i++)
+            {
+                //int tile_idx = i % chunk_tiles;
+                //int tile_idy = floor(i / chunk_tiles);
 
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
+                int vertex_color_location = glGetUniformLocation(program, "our_color");
+                glUniform4f(vertex_color_location, 1.0, 1.0, 1.0, 1.0);
 
-            glm::mat4 view = glm::mat4(1.0f);
+                glm::mat4 model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
 
-            view = camera_view_matrix(&camera);
+                glm::mat4 view = glm::mat4(1.0f);
 
-            unsigned int model_location = glGetUniformLocation(program, "model");
-            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+                view = camera_view_matrix(&camera);
 
-            unsigned int view_location = glGetUniformLocation(program, "view");
-            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+                unsigned int model_location = glGetUniformLocation(program, "model");
+                glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
 
-            unsigned int projection_location = glGetUniformLocation(program, "projection");
-            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+                unsigned int view_location = glGetUniformLocation(program, "view");
+                glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+                unsigned int projection_location = glGetUniformLocation(program, "projection");
+                glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+
+                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+            }
         }
+
+        glUseProgram(program);
 
         float time = SDL_GetTicks() * 0.001;
 
@@ -539,7 +594,20 @@ int main()
         //make a sorting algorithm and sort using game.render_entities[x]->depth
         for(int i = 0; i < game.render_amount; i++)
         {
+            int closest = i;
 
+            for(int j = i + 1; j < game.render_amount; j++)
+            {
+                if(game.render_entities[closest]->depth < game.render_entities[j]->depth)
+                {
+                    closest = j;
+                }
+            }
+
+            Entity* oldEntity = game.render_entities[closest];
+
+            game.render_entities[closest] = game.render_entities[i];
+            game.render_entities[i] = oldEntity;
         }
 
         //entity loop

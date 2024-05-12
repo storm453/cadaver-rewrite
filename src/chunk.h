@@ -3,12 +3,15 @@
 constexpr int tile_size = 16;
 constexpr int chunk_tiles = 16;
 constexpr int chunk_size =  tile_size * chunk_tiles;
-constexpr int chunk_load = 8;
+constexpr int chunk_load = 4;
 
 enum TileType
 {
+    tile_water,
     tile_dirt,
-    tile_stone
+    tile_grass,
+    tile_stone,
+    tile_snow
 };
 
 struct Tile

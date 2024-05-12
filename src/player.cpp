@@ -21,14 +21,14 @@ Entity* make_player()
 
 void step_player(Entity* entity)
 {
-    float speed = 300.0f;
+    float speed = 100.0f;
     float acc = 10.0f;
         
     V2 target_velocity;
 
     if(game.window.input.shift)
     {
-        speed =  700.0f;
+        speed = 250.0f;
     }
 
     target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
