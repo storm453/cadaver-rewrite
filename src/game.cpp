@@ -79,7 +79,8 @@ static const char* lmars_fragment_source =
     "uniform sampler2D ourTexture;\n"
     "uniform sampler2D tileTexture;\n"
     "void main() {\n"
-    "    finalColor = texture(tileTexture, vec2(TexCoord.x, TexCoord.y)) * vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "    float color = texture(tileTexture, TexCoord).r;\n"
+    "    finalColor = 128.0f * vec4(color, color, color, 1.0f);\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -414,6 +415,16 @@ int main()
     player_idle.frame_count = 10;
     player_idle.frame_rate = 0.1;
 
+    // player_run.frames[0] = make_sprite("assets/player/playerrun0");
+    // player_run.frames[1] = make_sprite("assets/player/playerrun1");
+    // player_run.frames[2] = make_sprite("assets/player/playerrun2");
+    // player_run.frames[3] = make_sprite("assets/player/playerrun3");
+    // player_run.frames[4] = make_sprite("assets/player/playerrun4");
+    // player_run.frames[5] = make_sprite("assets/player/playerrun5");
+    // player_run.frames[6] = make_sprite("assets/player/playerrun6");
+    // player_run.frames[7] = make_sprite("assets/player/playerrun7");
+    // player_run.frames[8] = make_sprite("assets/player/playerrun8");
+
     game.player->animation = player_idle;
     game.player->animation_enabled = true;
 
@@ -460,8 +471,6 @@ int main()
                         new_chunk->index = loop_chunk_index;
                         new_chunk->exists = true;
 
-                        glBindTexture(GL_TEXTURE_2D, tile_texture);
-
                         //tiles
                         for(int k = 0; k < chunk_tiles * chunk_tiles; k++)
                         {
@@ -485,10 +494,7 @@ int main()
                                 tile = tile_grass;
                             }
 
-                            glTexSubImage2D(GL_TEXTURE_2D, 0, tile_x, tile_y, chunk_tiles, chunk_tiles, GL_RED, GL_INT, &tile);
-                            
-                            // new_chunk->tiles[k].brightness = tile_noise;
-                            // new_chunk->tiles[k].type = tile;
+                            new_chunk->tiles[k] = tile;
                         }
                     }
                 }
@@ -520,15 +526,22 @@ int main()
             V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
-            int sampler1_location = glGetUniformLocation(chunk_program, "tileSampler");
+            int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture");
 
             glUniform1i(sampler0_location, 0);
-
-            glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
-
             glUniform1i(sampler1_location, 1);
 
+            glActiveTexture(GL_TEXTURE0);
+
+            glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
+           
+            glActiveTexture(GL_TEXTURE1);
+
             glBindTexture(GL_TEXTURE_2D, tile_texture);
+
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, chunk_tiles, chunk_tiles, GL_RED, GL_UNSIGNED_BYTE, &current_chunk->tiles);
+
+            glActiveTexture(GL_TEXTURE0);
 
             glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);

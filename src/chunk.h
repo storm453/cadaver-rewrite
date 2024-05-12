@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+
 constexpr int tile_size = 16;
 constexpr int chunk_tiles = 16;
 constexpr int chunk_size =  tile_size * chunk_tiles;
@@ -22,7 +26,7 @@ struct Tile
 
 struct Chunk
 {
-    Tile tiles[chunk_tiles * chunk_tiles];
+    std::uint8_t tiles[chunk_tiles * chunk_tiles];
     V2i index;
     bool exists = false;
     float noise;
