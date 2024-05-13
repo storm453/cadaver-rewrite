@@ -59,7 +59,7 @@ static const char* vertex_shader_source =
     "layout (location = 1) in vec2 aTexCoord;\n"
     "void main() {\n"
     "   gl_Position = projection * view * model * vec4(aPos, 1.0f);\n"
-    "   TexCoord = vec2(aTexCoord.x, aTexCoord.y);\n"
+    "   TexCoord = aTexCoord;\n"
     "}\n";
 
 static const char* fragment_shader_source =
@@ -79,8 +79,9 @@ static const char* lmars_fragment_source =
     "uniform sampler2D ourTexture;\n"
     "uniform sampler2D tileTexture;\n"
     "void main() {\n"
-    "    float color = texture(tileTexture, TexCoord).r;\n"
-    "    finalColor = 128.0f * vec4(color, color, color, 1.0f);\n"
+    "    vec2 tiling = fract(TexCoord * 16.0f);\n"
+    "    float tile = uint(texture(tileTexture, TexCoord).r * 255.0);\n"
+    "    finalColor = texture(ourTexture, vec2(tiling.x * 0.25f + 0.25 * tile, tiling.y));\n"
     "}\n";
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
@@ -243,6 +244,9 @@ glm::mat4 camera_view_matrix(const Camera* my_camera)
     return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
 }
 
+Animation anim_player_idle;
+Animation anim_player_run;
+
 int main()
 {
     init_window(&game.window);
@@ -309,50 +313,6 @@ int main()
         1, 2, 3,
     };
 
-    float cube_vertices[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-};
-
     //entity data
     unsigned int entity_vbo, entity_ebo;
 
@@ -380,60 +340,45 @@ int main()
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
-    //cube data
-    unsigned int cube_vbo;
-
-    glGenBuffers(1, &cube_vbo);
-
-    glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
     Sprite ltt_sprite = make_sprite("sand32.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
     Sprite gss_sprite = make_sprite("ground3.png");
+
+    Sprite tiles_sheet = make_sprite("chunk_textures.png");
 
     Sprite magma_sprite = make_sprite("magma.png");
 
     float zoom = 0.5;
 
-    Animation player_idle;
+    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
+    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
+    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
+    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
+    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
+    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
+    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
+    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
+    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
+    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
 
-    player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
-    player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
-    player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
-    player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
-    player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
-    player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
-    player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
-    player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
-    player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
-    player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
-
-    player_idle.frame_count = 10;
-    player_idle.frame_rate = 0.1;
-
-    // player_run.frames[0] = make_sprite("assets/player/playerrun0");
-    // player_run.frames[1] = make_sprite("assets/player/playerrun1");
-    // player_run.frames[2] = make_sprite("assets/player/playerrun2");
-    // player_run.frames[3] = make_sprite("assets/player/playerrun3");
-    // player_run.frames[4] = make_sprite("assets/player/playerrun4");
-    // player_run.frames[5] = make_sprite("assets/player/playerrun5");
-    // player_run.frames[6] = make_sprite("assets/player/playerrun6");
-    // player_run.frames[7] = make_sprite("assets/player/playerrun7");
-    // player_run.frames[8] = make_sprite("assets/player/playerrun8");
-
-    game.player->animation = player_idle;
+    anim_player_idle.frame_count = 10;
+    anim_player_idle.frame_rate = 0.1;
+  
+    anim_player_run.frames[0] = make_sprite("assets/player/playerrun0.png");
+    anim_player_run.frames[1] = make_sprite("assets/player/playerrun1.png");
+    anim_player_run.frames[2] = make_sprite("assets/player/playerrun2.png");
+    anim_player_run.frames[3] = make_sprite("assets/player/playerrun3.png");
+    anim_player_run.frames[4] = make_sprite("assets/player/playerrun4.png");
+    anim_player_run.frames[5] = make_sprite("assets/player/playerrun5.png");
+    anim_player_run.frames[6] = make_sprite("assets/player/playerrun6.png");
+    anim_player_run.frames[7] = make_sprite("assets/player/playerrun7.png");
+    anim_player_run.frames[8] = make_sprite("assets/player/playerrun8.png");
+    
+    anim_player_run.frame_count = 9;
+    anim_player_run.frame_rate = 0.1;
+  
+    game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
-
-    //chunk texture
-    unsigned int tile_texture;
-    glGenTextures(1, &tile_texture);
-    glBindTexture(GL_TEXTURE_2D, tile_texture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
 
     while(game.window.running)
     {
@@ -477,26 +422,38 @@ int main()
                             int tile_x = k % chunk_tiles;
                             int tile_y = floor(k / chunk_tiles);
 
-                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.001, 4);
+                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.002, 4);
 
                             TileType tile;
 
-                            if(tile_noise > 0 && tile_noise < 0.15)
+                            if(tile_noise > 0 && tile_noise < 0.3)
                             {
                                 tile = tile_water;
                             }
-                            else if(tile_noise > 0.15 && tile_noise < 0.3)
+                            else if(tile_noise > 0.3 && tile_noise < 0.6)
                             {
                                 tile = tile_dirt;
                             }
-                            else if(tile_noise > 0.3)
+                            else if(tile_noise > 0.6 && tile_noise < 0.8)
                             {
                                 tile = tile_grass;
+                            }
+                            else if(tile_noise > 0.8)
+                            {
+                                tile = tile_stone;
                             }
 
                             new_chunk->tiles[k] = tile;
                         }
-                    }
+
+                        glGenTextures(1, &new_chunk->tileTexture);
+                        glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
+
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);                   
+                  }
                 }
                 else
                 {
@@ -533,14 +490,12 @@ int main()
 
             glActiveTexture(GL_TEXTURE0);
 
-            glBindTexture(GL_TEXTURE_2D, ltt_sprite.texture);
+            glBindTexture(GL_TEXTURE_2D, tiles_sheet.texture);
            
             glActiveTexture(GL_TEXTURE1);
 
-            glBindTexture(GL_TEXTURE_2D, tile_texture);
-
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, chunk_tiles, chunk_tiles, GL_RED, GL_UNSIGNED_BYTE, &current_chunk->tiles);
-
+            glBindTexture(GL_TEXTURE_2D, current_chunk->tileTexture);
+            
             glActiveTexture(GL_TEXTURE0);
 
             glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
@@ -552,33 +507,27 @@ int main()
             float chunk_space_x = (chunk_physical.x);
             float chunk_space_y = (chunk_physical.y);
 
-            //for(int i = 0; i < chunk_tiles * chunk_tiles; i++)
-            {
-                //int tile_idx = i % chunk_tiles;
-                //int tile_idy = floor(i / chunk_tiles);
+            int vertex_color_location = glGetUniformLocation(chunk_program, "our_color");
+            glUniform4f(vertex_color_location, 1.0, 1.0, 1.0, 1.0);
 
-                int vertex_color_location = glGetUniformLocation(program, "our_color");
-                glUniform4f(vertex_color_location, 1.0, 1.0, 1.0, 1.0);
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
 
-                glm::mat4 model = glm::mat4(1.0f);
-                model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
+            glm::mat4 view = glm::mat4(1.0f);
 
-                glm::mat4 view = glm::mat4(1.0f);
+            view = camera_view_matrix(&camera);
 
-                view = camera_view_matrix(&camera);
+            unsigned int model_location = glGetUniformLocation(chunk_program, "model");
+            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
 
-                unsigned int model_location = glGetUniformLocation(program, "model");
-                glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
+            unsigned int view_location = glGetUniformLocation(chunk_program, "view");
+            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
 
-                unsigned int view_location = glGetUniformLocation(program, "view");
-                glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+            unsigned int projection_location = glGetUniformLocation(chunk_program, "projection");
+            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
 
-                unsigned int projection_location = glGetUniformLocation(program, "projection");
-                glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
-
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
-            }
-        }
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+         }
 
         glUseProgram(program);
 
@@ -664,9 +613,16 @@ int main()
             glUniform4f(vertex_color_location, 0.41f, green_value, 0.53f, 1.0f);
 
             glm::mat4 model = glm::mat4(1.0f);
+
+            int scale = 1;
+
+            if(entity->velocity.x < 0)
+            {
+              scale = -1;
+            }
             
             model = glm::translate(model, glm::vec3(entity_x, entity_y, 0.0f));
-            model = glm::scale(model, glm::vec3(entity_scale_x, entity_scale_y, 1.0));
+            model = glm::scale(model, glm::vec3(entity_scale_x * scale, entity_scale_y, 1.0));
         
             glm::mat4 view = camera_view_matrix(&camera);
 
@@ -683,44 +639,6 @@ int main()
 
             glBlendFunc(GL_ONE, GL_ZERO);
         }
-
-        //draw 3d stuff
-        glBindTexture(GL_TEXTURE_2D, magma_sprite.texture);
-
-        glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-        
-        //model matrix
-        glm::mat4 model = glm::mat4(1.0f);
-
-        float angle = SDL_GetTicks() * 0.001;
-
-        model = glm::rotate(model, glm::radians(angle * 50.0f), glm::vec3(1.0f, 0.5f, 0.0f)); 
-
-        //view matrix
-        glm::mat4 view = glm::mat4(1.0f);
-
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
-        //send to vertex shader
-        unsigned int model_location = glGetUniformLocation(program, "model");
-        glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-
-        unsigned int view_location = glGetUniformLocation(program, "view");
-        glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
-
-        unsigned int projection_location = glGetUniformLocation(program, "projection");
-        glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
-
-        glEnable(GL_DEPTH_TEST);
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        glDisable(GL_DEPTH_TEST);
 
         //render
         SDL_GL_SwapWindow(game.window.window);

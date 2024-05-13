@@ -26,6 +26,7 @@ struct Tile
 
 struct Chunk
 {
+    unsigned int tileTexture;
     std::uint8_t tiles[chunk_tiles * chunk_tiles];
     V2i index;
     bool exists = false;

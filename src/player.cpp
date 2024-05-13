@@ -1,3 +1,4 @@
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,7 +31,7 @@ void step_player(Entity* entity)
     {
         speed = 250.0f;
     }
-
+    
     target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
     target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
     
@@ -39,4 +40,19 @@ void step_player(Entity* entity)
 
     entity->position.x += entity->velocity.x * game.delta_time;
     entity->position.y += entity->velocity.y * game.delta_time;
+
+    float old_playback_time = entity->animation.playback_time;
+
+    if(fabsf(entity->velocity.x) > 10)
+    {
+        entity->animation = anim_player_run;
+
+        entity->animation.playback_time = old_playback_time;
+    }
+    else
+    {
+        entity->animation = anim_player_idle;   
+
+        entity->animation.playback_time = old_playback_time;
+    }
 }

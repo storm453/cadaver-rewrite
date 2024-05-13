@@ -23,4 +23,7 @@ struct Camera
 
 Sprite make_sprite(const char* filename);
 
+extern Animation anim_player_idle;
+extern Animation anim_player_run;
+
 extern Game game;
