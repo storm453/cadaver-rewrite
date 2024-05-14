@@ -258,9 +258,9 @@ int main()
     //make a couple entities
     for(int i = 0; i < 100; i++)
     {
-        Entity* entity = &game.entities[find_free_entity()];
+        // Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
+        // *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
     }
 
     //make the player entity
@@ -384,7 +384,7 @@ int main()
     {
         if(game.window.input.wheel)
         {
-            zoom += 0.05 * (game.window.input.wheel_value / 1);
+            zoom += 0.02 * (game.window.input.wheel_value / 1);
             game.window.input.wheel = false;
         }
 
@@ -422,15 +422,15 @@ int main()
                             int tile_x = k % chunk_tiles;
                             int tile_y = floor(k / chunk_tiles);
 
-                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.002, 4);
+                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.001, 4);
 
                             TileType tile;
 
-                            if(tile_noise > 0 && tile_noise < 0.3)
+                            if(tile_noise > 0 && tile_noise < 0.45)
                             {
                                 tile = tile_water;
                             }
-                            else if(tile_noise > 0.3 && tile_noise < 0.6)
+                            else if(tile_noise > 0.45 && tile_noise < 0.6)
                             {
                                 tile = tile_dirt;
                             }
