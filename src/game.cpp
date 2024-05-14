@@ -434,11 +434,11 @@ int main()
                             {
                                 tile = tile_dirt;
                             }
-                            else if(tile_noise > 0.6 && tile_noise < 0.8)
+                            else if(tile_noise > 0.6 && tile_noise < 0.7)
                             {
                                 tile = tile_grass;
                             }
-                            else if(tile_noise > 0.8)
+                            else if(tile_noise > 0.7)
                             {
                                 tile = tile_stone;
                             }
