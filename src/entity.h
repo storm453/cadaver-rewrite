@@ -26,9 +26,9 @@ enum PlayerState
 struct Entity
 {
     EntityType type = entity_none;
-    V2 position = { x: 0, y: 0 };
-    V2 velocity = { x: 0, y: 0 };
-    V2 origin = { x: 0, y: 0 };
+    V2 position;
+    V2 velocity;
+    V2 origin;
     bool render = true;
     float depth;
     bool animation_enabled = false;
@@ -36,7 +36,7 @@ struct Entity
     struct 
     { 
         float hp;
-        PlayerState state;
+        PlayerState state = player_idle;
     }player;
     Sprite sprite;
 };

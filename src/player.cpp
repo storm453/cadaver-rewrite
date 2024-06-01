@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "player.h"
 #include "entity.h"
 #include "game.h"
 #include "mathe.h"
@@ -14,45 +15,40 @@ Entity* make_player()
     *entity = make_entity(entity_player, Vec2{0, 0}, "player.png");
 
     int entity_width, entity_height;
-    
-    entity->origin = { x: (float)entity_width / 2, y: (float)entity_height };
 
     return entity;
 }
 
-void step_player(Entity* entity)
+void player_movement(Entity* entity, float speed)
 {
-    float speed = 100.0f;
-    float acc = 10.0f;
-        
     V2 target_velocity;
 
-    if(game.window.input.shift)
-    {
-        speed = 250.0f;
-    }
-    
     target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
     target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
     
-    entity->velocity.x += (target_velocity.x - entity->velocity.x) * acc * game.delta_time;
-    entity->velocity.y += (target_velocity.y - entity->velocity.y) * acc * game.delta_time;
+    //10 here is acceleration
+    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 10 * game.delta_time;
+    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 10 * game.delta_time;
 
     entity->position.x += entity->velocity.x * game.delta_time;
     entity->position.y += entity->velocity.y * game.delta_time;
+}
 
-    float old_playback_time = entity->animation.playback_time;
-
-    if(fabsf(entity->velocity.x) > 10)
+void step_player(Entity* entity)
+{
+    switch(entity->player.state)
     {
-        entity->animation = anim_player_run;
+        case(player_idle):
+            player_movement(entity, player_walk_speed);
 
-        entity->animation.playback_time = old_playback_time;
-    }
-    else
-    {
-        entity->animation = anim_player_idle;   
+            if(sqrt(entity->velocity.x * entity->velocity.x + entity->velocity.y * entity->velocity.y) > player_walk_speed)
+            {
+                entity->player.state = player_move;
+            }
+        break; 
 
-        entity->animation.playback_time = old_playback_time;
+        case(player_move):
+            player_movement(entity, 300.0f);
+        break;
     }
 }

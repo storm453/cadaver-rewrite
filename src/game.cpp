@@ -281,15 +281,13 @@ int main()
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
     
-    float entity_space_size = 1;
-
     float entity_vertices[] =
     {
-        //four vertices, forms a square
-         entity_space_size,  entity_space_size, 0.0,    1.0f, 1.0f,
-        -entity_space_size,  entity_space_size, 0.0,    0.0f, 1.0f,
-        -entity_space_size, -entity_space_size, 0.0,    0.0f, 0.0f,
-         entity_space_size, -entity_space_size, 0.0,    1.0f, 0.0f,
+        //vertices          texCoords
+         1.0,  1.0, 0.0,    1.0f, 1.0f,
+        -1.0,  1.0, 0.0,    0.0f, 1.0f,
+        -1.0, -1.0, 0.0,    0.0f, 0.0f,
+         1.0, -1.0, 0.0,    1.0f, 0.0f,
     };
 
     unsigned int entity_indices[] =
@@ -298,24 +296,6 @@ int main()
         0, 2, 3,
     };
 
-    float chunk_space_size_x = (chunk_size);
-    float chunk_space_size_y = (chunk_size);
-
-    float chunk_vertices[] =
-    {
-        0.0,                    0.0,                0.0,    0.0f, 1.0f,
-        chunk_space_size_x,     0.0,                0.0,    1.0f, 1.0f,
-        0.0,                   -chunk_space_size_y, 0.0,    0.0f, 0.0f,
-        chunk_space_size_x,    -chunk_space_size_y, 0.0,    1.0f, 0.0f,
-    };
-
-    unsigned int chunk_indices[] =
-    {
-        0, 1, 2,
-        1, 2, 3,
-    };
-
-    //entity data
     unsigned int entity_vbo, entity_ebo;
 
     glGenBuffers(1, &entity_vbo);
@@ -327,20 +307,11 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
-    //chunk buffer
-    unsigned int chunk_vbo, chunk_ebo;
-
-    glGenBuffers(1, &chunk_vbo);
-    glGenBuffers(1, &chunk_ebo);
-
-    glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
-    
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(chunk_indices), chunk_indices, GL_STATIC_DRAW);
-    //enable attrib arrays
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
     Sprite ltt_sprite = make_sprite("sand32.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
@@ -386,7 +357,7 @@ int main()
     {
         if(game.window.input.wheel)
         {
-            zoom += 0.02 * (game.window.input.wheel_value / 1);
+            zoom += 0.02 * (game.window.input.wheel_value);
             game.window.input.wheel = false;
         }
 
@@ -428,8 +399,6 @@ int main()
                             float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
                                                                                        
                             float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
-
-                            std::cout << "ID " << loop_chunk_index.x << "," << loop_chunk_index.y << " NOISE " << tile_noise << "\n";
 
                             TileType tile;
 
@@ -504,11 +473,8 @@ int main()
             
             glActiveTexture(GL_TEXTURE0);
 
-            glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+            glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
             float chunk_space_x = (chunk_physical.x);
             float chunk_space_y = (chunk_physical.y);
@@ -518,6 +484,8 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
+            model = glm::scale(model, glm::vec3(chunk_size / 2, chunk_size / 2, 0.0f));
+            model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
 
             glm::mat4 view = glm::mat4(1.0f);
 
