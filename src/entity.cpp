@@ -41,6 +41,18 @@ void entity_update(Entity* entity)
             
         }   
         break;
+
+        case(entity_enemy):
+        {
+            // float diff_x = game.player->position.x - entity->position.x;
+            // float diff_y = game.player->position.y - entity->position.y;
+
+            // float norm = sqrt(diff_x * diff_x + diff_y * diff_y);
+
+            // entity->position.x += (diff_x / norm);
+            // entity->position.y += (diff_y / norm);
+        }
+        break;
     }
 }
 

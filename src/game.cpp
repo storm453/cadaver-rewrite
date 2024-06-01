@@ -255,10 +255,12 @@ int main()
         glewInit();
     #endif
 
-    //make a couple entities
-    for(int i = 0; i < 100; i++)
+    //make a couple entities, some nemies
+    for(int i = 0; i < 1; i++)
     {
-        // Entity* entity = &game.entities[find_free_entity()];
+        Entity* entity = &game.entities[find_free_entity()];
+
+        *entity = make_entity(entity_enemy, Vec2{ 0, 0 }, "tree.png");
 
         // *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
     }
@@ -470,7 +472,6 @@ int main()
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
         projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
-        //projection = glm::ortho(-100.0f * game.window.width / game.window.height, 100.0f * game.window.width / game.window.height, -100.0f, 100.0f, -1000.0f, 1000.0f);
         projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f)); //zoooom
 
         glUseProgram(chunk_program);

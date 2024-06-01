@@ -7,7 +7,8 @@ enum EntityType
 {
     entity_none = 0,
     entity_object,
-    entity_player
+    entity_player,
+    entity_enemy
 };
 
 struct Vec2
