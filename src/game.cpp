@@ -412,9 +412,9 @@ int main()
                     
                     if(new_chunk != NULL)
                     {
-                        float noise_x = loop_chunk_index.x + 99999;
-                        float noise_y = loop_chunk_index.y + 99999;
-
+                        float noise_x = loop_chunk_index.x + 999;
+                        float noise_y = loop_chunk_index.y + 999;
+                        
                         new_chunk->index = loop_chunk_index;
                         new_chunk->exists = true;
 
@@ -424,7 +424,12 @@ int main()
                             int tile_x = k % chunk_tiles;
                             int tile_y = floor(k / chunk_tiles);
 
-                            float tile_noise = perlin2d(noise_x * chunk_size + tile_x * tile_size, noise_y * chunk_size + tile_y * tile_size, 0.001, 4);
+                            float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
+                            float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
+                                                                                       
+                            float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
+
+                            std::cout << "ID " << loop_chunk_index.x << "," << loop_chunk_index.y << " NOISE " << tile_noise << "\n";
 
                             TileType tile;
 
