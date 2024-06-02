@@ -1,8 +1,6 @@
 #pragma once
 
-#define SDL_MAIN_HANDLED
-#include <SDL.h>
-#include <SDL_image.h> 
+struct Entity;
 
 struct Sprite
 {
@@ -16,7 +14,10 @@ struct Animation
     int frame_count;
     float frame_rate;
     float playback_time;
+    bool dirty;
 };
 
 Sprite make_sprite(const char* filename);
 Sprite* step_animation(Animation* animation, float time_step);
+void switch_animation(Entity* entity, Animation new_animation);
+Animation load_animation(char* filename);

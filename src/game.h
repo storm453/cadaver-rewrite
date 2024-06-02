@@ -25,5 +25,8 @@ Sprite make_sprite(const char* filename);
 
 extern Animation anim_player_idle;
 extern Animation anim_player_run;
+extern Animation anim_player_walk;
+extern Animation anim_player_attack;
+extern Animation anim_player_swing;
 
 extern Game game;

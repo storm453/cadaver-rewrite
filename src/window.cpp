@@ -58,6 +58,16 @@ void update_window(Window* window)
             window->input.wheel = true;
             window->input.wheel_value = ev.wheel.y;
         }
+        if(ev.type == SDL_MOUSEBUTTONDOWN)
+        {
+            window->input.mouse_down = true;
+            window->input.mouse_button = ev.button.button;
+        }
+        if(ev.type == SDL_MOUSEBUTTONUP)
+        {
+            window->input.mouse_down = false;
+            window->input.mouse_button = ev.button.button;
+        }
     }
 }
 

@@ -34,21 +34,71 @@ void player_movement(Entity* entity, float speed)
     entity->position.y += entity->velocity.y * game.delta_time;
 }
 
+void player_attack(Entity* entity)
+{
+    if(game.window.input.mouse_down)
+    {
+        entity->player.state = PlayerState::attack;
+        entity->animation.playback_time = 0;
+    }
+}
+
 void step_player(Entity* entity)
 {
     switch(entity->player.state)
     {
-        case(player_idle):
+        case(PlayerState::idle):
             player_movement(entity, player_walk_speed);
+            player_attack(entity);
 
-            if(sqrt(entity->velocity.x * entity->velocity.x + entity->velocity.y * entity->velocity.y) > player_walk_speed)
+            if(length(entity->velocity) > player_walk_speed / 2)
             {
-                entity->player.state = player_move;
+                entity->player.state = PlayerState::walk;
             }
+
+            switch_animation(entity, anim_player_idle);
         break; 
 
-        case(player_move):
-            player_movement(entity, 300.0f);
+        case(PlayerState::walk):
+            player_movement(entity, player_walk_speed);
+            player_attack(entity);
+
+            if(length(entity->velocity) < player_walk_speed / 2)
+            {
+                entity->player.state = PlayerState::idle;
+            }
+            if(game.window.input.shift)
+            {
+                entity->player.state = PlayerState::run;
+            }
+
+            switch_animation(entity, anim_player_walk);
+        break;
+
+        case(PlayerState::run):
+            player_movement(entity, player_run_speed);
+            player_attack(entity);
+
+            if(length(entity->velocity) < player_walk_speed / 2)
+            {
+                entity->player.state = PlayerState::idle;
+            }
+            if(!game.window.input.shift)
+            {
+                entity->player.state = PlayerState::walk;
+            }
+
+            switch_animation(entity, anim_player_run);
+        break;
+
+        case(PlayerState::attack):
+            if(entity->animation.dirty)
+            {
+                entity->animation.dirty = false;
+                entity->player.state = PlayerState::idle;
+            }
+
+            switch_animation(entity, anim_player_attack);
         break;
     }
 }

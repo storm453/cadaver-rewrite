@@ -17,10 +17,12 @@ struct Vec2
     float y;
 };
 
-enum PlayerState
+enum struct PlayerState
 {
-    player_idle,
-    player_move
+    idle,
+    walk,
+    run,
+    attack
 };
 
 struct Entity
@@ -36,7 +38,7 @@ struct Entity
     struct 
     { 
         float hp;
-        PlayerState state = player_idle;
+        PlayerState state = PlayerState::idle;
     }player;
     Sprite sprite;
 };

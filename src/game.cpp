@@ -246,6 +246,9 @@ glm::mat4 camera_view_matrix(const Camera* my_camera)
 
 Animation anim_player_idle;
 Animation anim_player_run;
+Animation anim_player_walk;
+Animation anim_player_attack;
+Animation anim_player_swing;
 
 int main()
 {
@@ -349,7 +352,39 @@ int main()
     
     anim_player_run.frame_count = 9;
     anim_player_run.frame_rate = 0.1;
-  
+
+    anim_player_walk.frames[0] = make_sprite("assets/player/playerwalk0.png");
+    anim_player_walk.frames[1] = make_sprite("assets/player/playerwalk1.png");
+    anim_player_walk.frames[2] = make_sprite("assets/player/playerwalk2.png");
+    anim_player_walk.frames[3] = make_sprite("assets/player/playerwalk3.png");
+    anim_player_walk.frames[4] = make_sprite("assets/player/playerwalk4.png");
+    anim_player_walk.frames[5] = make_sprite("assets/player/playerwalk5.png");
+    anim_player_walk.frames[6] = make_sprite("assets/player/playerwalk6.png");
+    anim_player_walk.frames[7] = make_sprite("assets/player/playerwalk7.png");
+
+    anim_player_walk.frame_count = 8;
+    anim_player_walk.frame_rate = 0.1;
+
+    anim_player_attack.frames[0] = make_sprite("assets/player/playerattack0.png");
+    anim_player_attack.frames[1] = make_sprite("assets/player/playerattack1.png");
+    
+    for(int i = 2; i < 7; i++)
+    {
+        anim_player_attack.frames[i] = make_sprite("assets/player/playerattack2.png");
+    }
+
+    anim_player_attack.frames[7] = make_sprite("assets/player/playerattack3.png");
+
+    anim_player_attack.frame_count = 8;
+    anim_player_attack.frame_rate = 0.05;
+
+    anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0");
+    anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1");
+    anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2");
+
+    anim_player_swing.frame_count = 4;
+    anim_player_swing.frame_rate = 0.1;
+
     game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
 
@@ -390,7 +425,7 @@ int main()
                         new_chunk->exists = true;
 
                         //tiles
-                        for(int k = 0; k < chunk_tiles * chunk_tiles; k++)
+                        for(int  k = 0; k < chunk_tiles * chunk_tiles; k++)
                         {
                             int tile_x = k % chunk_tiles;
                             int tile_y = floor(k / chunk_tiles);
@@ -442,11 +477,10 @@ int main()
 
         update_window(&game.window);
 
-        // projection
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
         projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
-        projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f)); //zoooom
+        projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f));
 
         glUseProgram(chunk_program);
 

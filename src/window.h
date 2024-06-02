@@ -15,6 +15,8 @@ struct Window
     {
         float mouseX;
         float mouseY;
+        float mouse_down;
+        int mouse_button;
         float wheel_value;
         float wheel;
         bool w;
