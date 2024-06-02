@@ -478,6 +478,7 @@ int main()
         update_window(&game.window);
 
         glm::mat4 projection = glm::mat4(1.0f);
+        
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
         projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
         projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f));
@@ -492,7 +493,7 @@ int main()
             V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
-            int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture");
+            int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
 
             glUniform1i(sampler0_location, 0);
             glUniform1i(sampler1_location, 1);

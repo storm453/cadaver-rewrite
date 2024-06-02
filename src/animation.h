@@ -8,9 +8,22 @@ struct Sprite
     int width, height;
 };
 
+enum struct TriggerType
+{
+    none,
+    state,
+    hitbox
+};
+
+struct Trigger
+{
+    TriggerType type = TriggerType::none;
+};
+
 struct Animation
 {
     Sprite frames[128];
+    TriggerType triggers[128];
     int frame_count;
     float frame_rate;
     float playback_time;
