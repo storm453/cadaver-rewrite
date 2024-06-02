@@ -27,12 +27,3 @@ void switch_animation(Entity* entity, Animation new_animation)
     entity->animation = new_animation;
     entity->animation.playback_time = old_playback_time;
 }
-
-Animation load_animation(char* filename)
-{   
-    FILE* f = fopen(filename, "rb");
-
-    
-
-    fclose(f);
-}

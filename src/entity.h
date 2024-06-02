@@ -22,7 +22,8 @@ enum struct PlayerState
     idle,
     walk,
     run,
-    attack
+    swing,
+    stab
 };
 
 struct Entity
@@ -38,6 +39,7 @@ struct Entity
     struct 
     { 
         float hp;
+        int combo = 0;
         PlayerState state = PlayerState::idle;
     }player;
     Sprite sprite;

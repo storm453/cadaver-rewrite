@@ -34,11 +34,37 @@ void player_movement(Entity* entity, float speed)
     entity->position.y += entity->velocity.y * game.delta_time;
 }
 
+void move_player(Entity* entity, float amount)
+{
+    V2 target_velocity;
+
+    target_velocity.x = 1 * amount;
+    target_velocity.y = 1 * amount;
+    
+    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 10 * game.delta_time;
+    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 10 * game.delta_time;
+
+    entity->position.x += entity->velocity.x * game.delta_time;
+    entity->position.y += entity->velocity.y * game.delta_time;
+}
+
 void player_attack(Entity* entity)
 {
     if(game.window.input.mouse_down)
     {
-        entity->player.state = PlayerState::attack;
+        game.window.input.mouse_down = false;
+        
+        if(entity->player.combo >= 3)
+        {
+            entity->player.state = PlayerState::stab;
+            entity->player.combo = 0;
+        }
+        else
+        {
+            entity->player.state = PlayerState::swing;
+        }
+        
+        entity->player.combo++;
         entity->animation.playback_time = 0;
     }
 }
@@ -91,7 +117,21 @@ void step_player(Entity* entity)
             switch_animation(entity, anim_player_run);
         break;
 
-        case(PlayerState::attack):
+        case(PlayerState::swing):
+            player_movement(entity, player_walk_speed / 2);
+
+            if(entity->animation.dirty)
+            {
+                entity->animation.dirty = false;
+                entity->player.state = PlayerState::idle;
+            }
+
+            switch_animation(entity, anim_player_swing);
+        break;
+
+        case(PlayerState::stab):
+            move_player(entity, 300);
+
             if(entity->animation.dirty)
             {
                 entity->animation.dirty = false;

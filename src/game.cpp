@@ -263,7 +263,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_enemy, Vec2{ 0, 0 }, "tree.png");
+        //*entity = make_entity(entity_enemy, Vec2{ 0, 0 }, "tree.png");
 
         // *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
     }
@@ -378,11 +378,11 @@ int main()
     anim_player_attack.frame_count = 8;
     anim_player_attack.frame_rate = 0.05;
 
-    anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0");
-    anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1");
-    anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2");
+    anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
+    anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
+    anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
 
-    anim_player_swing.frame_count = 4;
+    anim_player_swing.frame_count = 3;
     anim_player_swing.frame_rate = 0.1;
 
     game.player->animation = anim_player_idle;

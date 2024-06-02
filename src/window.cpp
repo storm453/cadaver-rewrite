@@ -63,11 +63,6 @@ void update_window(Window* window)
             window->input.mouse_down = true;
             window->input.mouse_button = ev.button.button;
         }
-        if(ev.type == SDL_MOUSEBUTTONUP)
-        {
-            window->input.mouse_down = false;
-            window->input.mouse_button = ev.button.button;
-        }
     }
 }
 

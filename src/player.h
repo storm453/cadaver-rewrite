@@ -7,4 +7,5 @@ constexpr float player_run_speed = 300.0f;
 
 Entity* make_player();
 void player_movement(Entity* entity, float speed);
+void move_player(Entity* entity, float amount);
 void step_player(Entity* entity);
