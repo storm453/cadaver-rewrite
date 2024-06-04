@@ -25,7 +25,6 @@
 
 #include <cstdint>
 
-//additional utils
 #include "window.h"
 #include "entity.h"
 #include "game.h"
@@ -36,17 +35,6 @@
 #define STB_IMAGE_IMPLEMENTATION   
 
 #include "stb_image.h"
-
-Game game;
-
-float lerp(float a, float b, float t)
-{
-    return a * (1 - t) + b * t;
-}
-
-Camera camera;
-
-Chunk chunks_array[999];
 
 static const char* vertex_shader_source =
     "#version 330 core\n"
@@ -68,7 +56,7 @@ static const char* fragment_shader_source =
     "uniform sampler2D ourTexture;\n"
     "uniform vec4 our_color;\n"
     "void main() {\n"
-    "    finalColor = texture(ourTexture, vec2(TexCoord.x, TexCoord.y)) * vec4(our_color.x, our_color.y, our_color.z, 1.0f);\n"
+    "    finalColor = texture(ourTexture, vec2(TexCoord.x, TexCoord.y));\n"
     "}\n";
 
 static const char* lmars_fragment_source =
@@ -82,6 +70,10 @@ static const char* lmars_fragment_source =
     "    float tile = uint(texture(tileTexture, TexCoord).r * 255.0);\n"
     "    finalColor = texture(ourTexture, vec2(tiling.x * 0.25f + 0.25 * tile, tiling.y));\n"
     "}\n";
+
+Game game;
+Camera camera;
+Chunk chunks_array[999];
 
 unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
 {
@@ -257,30 +249,15 @@ int main()
         glewInit();
     #endif
 
-    //make a couple entities, some nemies
-    for(int i = 0; i < 1; i++)
-    {
-        Entity* entity = &game.entities[find_free_entity()];
-
-        //*entity = make_entity(entity_enemy, Vec2{ 0, 0 }, "tree.png");
-
-        // *entity = make_entity(entity_object, Vec2{ (rand() / (float)RAND_MAX) * (game.window.width * 2), (rand() / (float)RAND_MAX) * (game.window.height * 2) }, "tree.png");
-    }
-
     //make the player entity
-    {
-        Entity* entity = &game.entities[find_free_entity()];
+    Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(entity_player, Vec2{0, 0}, "player.png");
+    *entity = make_entity(entity_player, Vec2{0, 0}, "player.png");
 
-        game.player = entity;
-    }
+    game.player = entity;
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
-
     unsigned int chunk_program = shader_program(vertex_shader_source, lmars_fragment_source);
-
-    glUseProgram(program);
     
     unsigned int vao;
     
@@ -322,12 +299,8 @@ int main()
     Sprite ltt_sprite = make_sprite("sand32.png");
     Sprite gtt_sprite = make_sprite("grass2.png");
     Sprite gss_sprite = make_sprite("ground3.png");
-
     Sprite tiles_sheet = make_sprite("chunk_textures.png");
-
     Sprite magma_sprite = make_sprite("magma.png");
-
-    float zoom = 0.5;
 
     anim_player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
     anim_player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
@@ -393,15 +366,18 @@ int main()
 
     while(game.window.running)
     {
-        if(game.window.input.wheel)
-        {
-            zoom += 0.02 * (game.window.input.wheel_value);
-            game.window.input.wheel = false;
-        }
+        unsigned int start_time = SDL_GetTicks();
 
-        //set screen color
+        update_window(&game.window);
+
         glClearColor(0.81f, 0.75f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
+        if(game.window.input.wheel)
+        {
+            camera.zoom += 0.02 * (game.window.input.wheel_value);
+            game.window.input.wheel = false;
+        }
 
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
 
@@ -476,15 +452,11 @@ int main()
             }
         }
 
-        unsigned int start_time = SDL_GetTicks();
-
-        update_window(&game.window);
-
         glm::mat4 projection = glm::mat4(1.0f);
         
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
         projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
-        projection = glm::scale(projection, glm::vec3(zoom, zoom, 1.0f));
+        projection = glm::scale(projection, glm::vec3(camera.zoom, camera.zoom, 1.0f));
 
         glUseProgram(chunk_program);
 
@@ -502,11 +474,9 @@ int main()
             glUniform1i(sampler1_location, 1);
 
             glActiveTexture(GL_TEXTURE0);
-
             glBindTexture(GL_TEXTURE_2D, tiles_sheet.texture);
            
             glActiveTexture(GL_TEXTURE1);
-
             glBindTexture(GL_TEXTURE_2D, current_chunk->tileTexture);
             
             glActiveTexture(GL_TEXTURE0);
@@ -516,9 +486,6 @@ int main()
 
             float chunk_space_x = (chunk_physical.x);
             float chunk_space_y = (chunk_physical.y);
-
-            int vertex_color_location = glGetUniformLocation(chunk_program, "our_color");
-            glUniform4f(vertex_color_location, 1.0, 1.0, 1.0, 1.0);
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
@@ -543,10 +510,6 @@ int main()
 
         glUseProgram(program);
 
-        float time = SDL_GetTicks() * 0.001;
-
-        float green_value = (sin(time)) / 2.0f + 0.5f;
-
         game.render_amount = 0;
 
         for(int i = 0; i < max_entity_count; i++)
@@ -565,26 +528,6 @@ int main()
             }
         }
 
-        //make a sorting algorithm and sort using game.render_entities[x]->depth
-        for(int i = 0; i < game.render_amount; i++)
-        {
-            int closest = i;
-
-            for(int j = i + 1; j < game.render_amount; j++)
-            {
-                if(game.render_entities[closest]->depth < game.render_entities[j]->depth)
-                {
-                    closest = j;
-                }
-            }
-
-            Entity* oldEntity = game.render_entities[closest];
-
-            game.render_entities[closest] = game.render_entities[i];
-            game.render_entities[i] = oldEntity;
-        }
-
-        //entity loop
         for(int i = 0; i < game.render_amount; i++)
         {
             Entity* entity = game.render_entities[i];
@@ -620,10 +563,7 @@ int main()
 
             float entity_x = (entity->position.x);
             float entity_y = (entity->position.y);
-
-            int vertex_color_location = glGetUniformLocation(program, "our_color");
-            glUniform4f(vertex_color_location, 0.41f, green_value, 0.53f, 1.0f);
-
+            
             glm::mat4 model = glm::mat4(1.0f);
 
             int scale = 1;
@@ -652,19 +592,17 @@ int main()
             glBlendFunc(GL_ONE, GL_ZERO);
         }
 
-        //render
-        SDL_GL_SwapWindow(game.window.window);
-    
         unsigned int end_time = SDL_GetTicks();
 
-        game.delta_time = (end_time - start_time) / 1000.0f;
-
-        //move camera
         float target_x = game.player->position.x;
         float target_y = game.player->position.y;
 
         camera.pos.x = lerp(camera.pos.x, target_x, 0.05);
         camera.pos.y = lerp(camera.pos.y, target_y, 0.05);
+
+        game.delta_time = (end_time - start_time) / 1000.0f;
+
+        SDL_GL_SwapWindow(game.window.window);
     }
     
     clean_window(&game.window);
