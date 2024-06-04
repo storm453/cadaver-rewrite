@@ -4,19 +4,14 @@
 #include <iostream>
 #include <chrono>
 
+#include <glad/glad.h>
+
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-
-#if defined(__WIN32__)
-#include <GL/glew.h>
-#include <GL/glu.h>
-#endif
 
 #if defined(__APPLE__)
 #include <OpenGL/gl3.h>
 #endif
-
-#define GLEW_STATIC
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -243,8 +238,14 @@ int main()
     init_window(&game.window);
 
     #if defined(__WIN32__)
-        glewInit();
+        //glewInit();
     #endif
+
+    //load glad
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) 
+    {
+	    throw(std::string("Failed to initialize GLAD"));
+	}
 
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
