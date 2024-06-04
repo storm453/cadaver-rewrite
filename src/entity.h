@@ -45,6 +45,9 @@ struct Entity
     Sprite sprite;
 };
 
-void entity_update(Entity* entity);
-Entity make_entity(EntityType entityType, Vec2 entityPos, const char* filename);
+constexpr float player_walk_speed = 100.0f;
+constexpr float player_run_speed = 300.0f;
+
 int find_free_entity();
+Entity make_entity(EntityType entityType, Vec2 entityPos, const char* filename);
+void entity_update(Entity* entity);

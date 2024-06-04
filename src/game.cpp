@@ -29,7 +29,6 @@
 #include "window.h"
 #include "entity.h"
 #include "game.h"
-#include "player.h"
 #include "animation.h"
 #include "chunk.h"
 #include "entity.h"
@@ -270,7 +269,11 @@ int main()
 
     //make the player entity
     {
-        game.player = make_player();
+        Entity* entity = &game.entities[find_free_entity()];
+
+        *entity = make_entity(entity_player, Vec2{0, 0}, "player.png");
+
+        game.player = entity;
     }
 
     unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
