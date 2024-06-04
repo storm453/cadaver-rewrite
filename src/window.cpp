@@ -13,8 +13,8 @@ void init_window(Window* window)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     window->window = SDL_CreateWindow("Cadaver 2!!!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width, window->height, flags);
-    window->running = true;
     window->context = SDL_GL_CreateContext(window->window);
+    window->running = true;
 }
 
 void update_window(Window* window)
@@ -63,10 +63,4 @@ void update_window(Window* window)
             window->input.mouse_button = ev.button.button;
         }
     }
-}
-
-void clean_window(Window* window)
-{
-    SDL_GL_DeleteContext(window->context);
-    SDL_DestroyWindow(window->window);
 }

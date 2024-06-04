@@ -230,11 +230,11 @@ glm::mat4 camera_view_matrix(const Camera* my_camera)
     return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
 }
 
-Animation anim_player_idle;
-Animation anim_player_run;
-Animation anim_player_walk;
-Animation anim_player_attack;
-Animation anim_player_swing;
+void setConstant(unsigned int program, char* location, glm::mat4 data)
+{
+    unsigned int uniform_location = glGetUniformLocation(program, location);
+    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(data));
+}
 
 int main()
 {
@@ -302,19 +302,21 @@ int main()
     Sprite tiles_sheet = make_sprite("chunk_textures.png");
     Sprite magma_sprite = make_sprite("magma.png");
 
-    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
-    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
-    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
-    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
-    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
-    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
-    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
-    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
-    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
-    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
+    Animation* anim_player_idle = &game.player->player.idle_animation;
 
-    anim_player_idle.frame_count = 10;
-    anim_player_idle.frame_rate = 0.1;
+    anim_player_idle->frames[0] = make_sprite("assets/player/playeridle1.png");
+    anim_player_idle->frames[1] = make_sprite("assets/player/playeridle2.png");
+    anim_player_idle->frames[2] = make_sprite("assets/player/playeridle3.png");
+    anim_player_idle->frames[3] = make_sprite("assets/player/playeridle4.png");
+    anim_player_idle->frames[4] = make_sprite("assets/player/playeridle5.png");
+    anim_player_idle->frames[5] = make_sprite("assets/player/playeridle6.png");
+    anim_player_idle->frames[6] = make_sprite("assets/player/playeridle7.png");
+    anim_player_idle->frames[7] = make_sprite("assets/player/playeridle8.png");
+    anim_player_idle->frames[8] = make_sprite("assets/player/playeridle9.png");
+    anim_player_idle->frames[9] = make_sprite("assets/player/playeridle10.png");
+
+    anim_player_idle->frame_count = 10;
+    anim_player_idle->frame_rate = 0.1;
   
     anim_player_run.frames[0] = make_sprite("assets/player/playerrun0.png");
     anim_player_run.frames[1] = make_sprite("assets/player/playerrun1.png");
@@ -380,8 +382,7 @@ int main()
         }
 
         V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
-
-        //chunk logic
+        
         for(int i = -chunk_load; i <= chunk_load; i++)
         {
             for(int j = -chunk_load; j <= chunk_load; j++)
@@ -471,7 +472,7 @@ int main()
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
 
             glUniform1i(sampler0_location, 0);
-            glUniform1i(sampler1_location, 1);
+            glUniform1i(sampler1_location, 1); 
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tiles_sheet.texture);
@@ -484,11 +485,8 @@ int main()
             glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
-            float chunk_space_x = (chunk_physical.x);
-            float chunk_space_y = (chunk_physical.y);
-
             glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(chunk_space_x, chunk_space_y, 0.0f));
+            model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
             model = glm::scale(model, glm::vec3(chunk_size / 2, chunk_size / 2, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
 
@@ -496,14 +494,9 @@ int main()
 
             view = camera_view_matrix(&camera);
 
-            unsigned int model_location = glGetUniformLocation(chunk_program, "model");
-            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-
-            unsigned int view_location = glGetUniformLocation(chunk_program, "view");
-            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
-
-            unsigned int projection_location = glGetUniformLocation(chunk_program, "projection");
-            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+            setConstant(chunk_program, "model", model);
+            setConstant(chunk_program, "view", view);
+            setConstant(chunk_program, "projection", projection);
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
          }
@@ -532,22 +525,21 @@ int main()
         {
             Entity* entity = game.render_entities[i];
 
-            float entity_scale_x;
-            float entity_scale_y;
+            V2 entity_scale;
 
             if(entity->animation_enabled)
             {
                 Sprite* current_frame = step_animation(&entity->animation, game.delta_time);
 
-                entity_scale_x = current_frame->width;
-                entity_scale_y = current_frame->height;
+                entity_scale.x = current_frame->width;
+                entity_scale.y = current_frame->height;
 
                 glBindTexture(GL_TEXTURE_2D, current_frame->texture);
             }
             else
             {
-                entity_scale_x = entity->sprite.width;
-                entity_scale_y = entity->sprite.height;
+                entity_scale.x = entity->sprite.width;
+                entity_scale.y = entity->sprite.height;
 
                 glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
             }
@@ -558,13 +550,8 @@ int main()
             glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
             float entity_x = (entity->position.x);
             float entity_y = (entity->position.y);
-            
-            glm::mat4 model = glm::mat4(1.0f);
 
             int scale = 1;
 
@@ -573,19 +560,16 @@ int main()
               scale = -1;
             }
             
-            model = glm::translate(model, glm::vec3(entity_x, entity_y, 0.0f));
-            model = glm::scale(model, glm::vec3(entity_scale_x * scale, entity_scale_y, 1.0));
+            glm::mat4 model = glm::mat4(1.0f);
+
+            model = glm::translate(model, glm::vec3(entity->position.x, entity->position.y, 0.0f));
+            model = glm::scale(model, glm::vec3(entity_scale.x, entity_scale.y, 1.0));
         
             glm::mat4 view = camera_view_matrix(&camera);
 
-            unsigned int model_location = glGetUniformLocation(program, "model");
-            glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-
-            unsigned int view_location = glGetUniformLocation(program, "view");
-            glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
-
-            unsigned int projection_location = glGetUniformLocation(program, "projection");
-            glUniformMatrix4fv(projection_location, 1, GL_FALSE, glm::value_ptr(projection));
+            setConstant(program, "model", model);
+            setConstant(program, "view", view);
+            setConstant(program, "projection", projection);
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
@@ -605,5 +589,6 @@ int main()
         SDL_GL_SwapWindow(game.window.window);
     }
     
-    clean_window(&game.window);
+    SDL_GL_DeleteContext(game.window.context);
+    SDL_DestroyWindow(game.window.window);
 }

@@ -1,1 +1,1 @@
-clang++ src/*.cpp src/glad.c -o tynebourne.exe -Iinclude -Llib -lopengl32 -lSDL2 -Wno-gnu-designator -g
+clang++ src/*.cpp src/glad.c -o tynebourne -Iinclude -Llib -lSDL2 -g

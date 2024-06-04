@@ -30,4 +30,3 @@ struct Window
 
 void init_window(Window* window);
 void update_window(Window* window);
-void clean_window(Window* window);
