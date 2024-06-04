@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
+#include <cstdint>
 #include <iostream>
 #include <chrono>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-//silence
-#define GL_SILENCE_DEPRECATION
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 
 #if defined(__WIN32__)
 #include <GL/glew.h>
@@ -23,7 +18,9 @@
 
 #define GLEW_STATIC
 
-#include <cstdint>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "window.h"
 #include "entity.h"
