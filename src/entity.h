@@ -41,10 +41,11 @@ struct Entity
         float hp;
         int combo = 0;
         PlayerState state = PlayerState::idle;
-        Animation idle_animation;
-        Animation walk_animation;
-        Animation run_animation;
-        Animation attack_animation;
+        Animation* idle_animation;
+        Animation* walk_animation;
+        Animation* run_animation;
+        Animation* swing_animation;
+        Animation* stab_animation;
     }player;
     Sprite sprite;
 };

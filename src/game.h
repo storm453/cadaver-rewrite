@@ -1,5 +1,6 @@
 #pragma once
 #include "window.h"
+#include "entity.h"
 #include <glm/glm.hpp>
 
 #define max_entity_count 999
@@ -20,7 +21,5 @@ struct Camera
     glm::mat4 projection = glm::mat4(1.0f);
     float zoom = 0.5;
 };
-
-Sprite make_sprite(const char* filename);
 
 extern Game game;

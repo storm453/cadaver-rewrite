@@ -92,7 +92,7 @@ void entity_update(Entity* entity)
                         entity->player.state = PlayerState::walk;
                     }
 
-                    switch_animation(entity, anim_player_idle);
+                    switch_animation(entity, entity->player.idle_animation);
                 } break; 
 
                 case(PlayerState::walk): {
@@ -108,7 +108,7 @@ void entity_update(Entity* entity)
                         entity->player.state = PlayerState::run;
                     }
 
-                    switch_animation(entity, anim_player_walk);
+                    switch_animation(entity, entity->player.walk_animation);
                 } break;
 
                 case(PlayerState::run): {
@@ -124,7 +124,7 @@ void entity_update(Entity* entity)
                         entity->player.state = PlayerState::walk;
                     }
 
-                    switch_animation(entity, anim_player_run);
+                    switch_animation(entity, entity->player.run_animation);
                 } break;
 
                 case(PlayerState::swing): {
@@ -136,7 +136,7 @@ void entity_update(Entity* entity)
                         entity->player.state = PlayerState::idle;
                     }
 
-                    switch_animation(entity, anim_player_swing);
+                    switch_animation(entity, entity->player.swing_animation);
                 } break;
 
                 case(PlayerState::stab): {
@@ -148,7 +148,7 @@ void entity_update(Entity* entity)
                         entity->player.state = PlayerState::idle;
                     }
 
-                    switch_animation(entity, anim_player_attack);
+                    switch_animation(entity, entity->player.stab_animation);
                 } break;
             }
         }

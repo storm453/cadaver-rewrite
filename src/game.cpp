@@ -230,7 +230,7 @@ glm::mat4 camera_view_matrix(const Camera* my_camera)
     return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
 }
 
-void setConstant(unsigned int program, char* location, glm::mat4 data)
+void setConstant(unsigned int program, const char* location, glm::mat4 data)
 {
     unsigned int uniform_location = glGetUniformLocation(program, location);
     glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(data));
@@ -296,27 +296,28 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-    Sprite ltt_sprite = make_sprite("sand32.png");
-    Sprite gtt_sprite = make_sprite("grass2.png");
-    Sprite gss_sprite = make_sprite("ground3.png");
     Sprite tiles_sheet = make_sprite("chunk_textures.png");
     Sprite magma_sprite = make_sprite("magma.png");
 
-    Animation* anim_player_idle = &game.player->player.idle_animation;
+    Animation anim_player_idle;
+    Animation anim_player_run;
+    Animation anim_player_walk;
+    Animation anim_player_attack;
+    Animation anim_player_swing;
 
-    anim_player_idle->frames[0] = make_sprite("assets/player/playeridle1.png");
-    anim_player_idle->frames[1] = make_sprite("assets/player/playeridle2.png");
-    anim_player_idle->frames[2] = make_sprite("assets/player/playeridle3.png");
-    anim_player_idle->frames[3] = make_sprite("assets/player/playeridle4.png");
-    anim_player_idle->frames[4] = make_sprite("assets/player/playeridle5.png");
-    anim_player_idle->frames[5] = make_sprite("assets/player/playeridle6.png");
-    anim_player_idle->frames[6] = make_sprite("assets/player/playeridle7.png");
-    anim_player_idle->frames[7] = make_sprite("assets/player/playeridle8.png");
-    anim_player_idle->frames[8] = make_sprite("assets/player/playeridle9.png");
-    anim_player_idle->frames[9] = make_sprite("assets/player/playeridle10.png");
+    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
+    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
+    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
+    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
+    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
+    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
+    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
+    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
+    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
+    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
 
-    anim_player_idle->frame_count = 10;
-    anim_player_idle->frame_rate = 0.1;
+    anim_player_idle.frame_count = 10;
+    anim_player_idle.frame_rate = 0.1;
   
     anim_player_run.frames[0] = make_sprite("assets/player/playerrun0.png");
     anim_player_run.frames[1] = make_sprite("assets/player/playerrun1.png");
@@ -365,6 +366,12 @@ int main()
 
     game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
+
+    game.player->player.idle_animation = &anim_player_idle;
+    game.player->player.walk_animation = &anim_player_walk;
+    game.player->player.run_animation = &anim_player_run;
+    game.player->player.stab_animation = &anim_player_attack;
+    game.player->player.swing_animation = &anim_player_swing;
 
     while(game.window.running)
     {
@@ -466,7 +473,7 @@ int main()
         {
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
+            V2i chunk_physical = { (current_chunk->index.x * chunk_size * 2), (current_chunk->index.y * chunk_size * 2) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
@@ -487,9 +494,9 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(chunk_size / 2, chunk_size / 2, 0.0f));
+            model = glm::scale(model, glm::vec3(chunk_size, chunk_size, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
-
+    
             glm::mat4 view = glm::mat4(1.0f);
 
             view = camera_view_matrix(&camera);

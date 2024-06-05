@@ -32,4 +32,4 @@ struct Animation
 
 Sprite make_sprite(const char* filename);
 Sprite* step_animation(Animation* animation, float time_step);
-void switch_animation(Entity* entity, Animation new_animation);
+void switch_animation(Entity* entity, Animation* new_animation);

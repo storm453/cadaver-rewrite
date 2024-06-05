@@ -1,1 +1,1 @@
-clang++ src/*.cpp src/glad.c -o tynebourne -Iinclude -Llib -lSDL2 -g
+clang++ src/*.cpp -o tynebourne -Iinclude -Llib -lSDL2 -g

@@ -20,10 +20,10 @@ Sprite* step_animation(Animation* animation, float time_step)
     return &animation->frames[current_frame];
 }
 
-void switch_animation(Entity* entity, Animation new_animation)
+void switch_animation(Entity* entity, Animation* new_animation)
 {
     float old_playback_time = entity->animation.playback_time;
 
-    entity->animation = new_animation;
+    entity->animation = *new_animation;
     entity->animation.playback_time = old_playback_time;
 }
