@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "entity.hpp"
-#include "game.hpp"
+#include "main.hpp"
 
 int find_free_entity()
 {
@@ -19,21 +19,16 @@ int find_free_entity()
     return -1;
 }
 
-Entity make_entity(EntityType entityType, Vec2 entityPos, const char* filename)
+Entity make_entity(EntityType entityType, V2 entityPos, const char* filename)
 {
     Entity temp = {};
 
     temp.velocity.x = 0;
     temp.velocity.y = 0;
 
-    temp.origin.x = 0;
-    temp.origin.y = 0;
-
     temp.type = entityType;
     temp.position.x = entityPos.x;
     temp.position.y = entityPos.y;
-
-    temp.sprite = make_sprite(filename);
     
     return temp;
 }
@@ -65,8 +60,6 @@ void player_attack(Entity* entity)
 
 void entity_update(Entity* entity)
 {
-    entity->depth = -(entity->position.y);
-    
     switch(entity->type)
     {
         case(entity_player):

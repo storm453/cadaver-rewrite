@@ -13,7 +13,7 @@
 
 #include "window.hpp"
 #include "entity.hpp"
-#include "game.hpp"
+#include "main.hpp"
 #include "animation.hpp"
 #include "chunk.hpp"
 #include "entity.hpp"
@@ -127,17 +127,6 @@ float perlin2d(float x, float y, float freq, int depth)
     return fin/div;
 }
 
-glm::mat4 camera_view_matrix(const Camera* my_camera)
-{  
-    return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
-}
-
-void setConstant(unsigned int program, const char* location, glm::mat4 data)
-{
-    unsigned int uniform_location = glGetUniformLocation(program, location);
-    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(data));
-}
-
 int main()
 {
     init_window(&game.window);
@@ -150,7 +139,7 @@ int main()
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(entity_player, Vec2{ 0, 0 }, "player.png");
+    *entity = make_entity(entity_player, V2{ 0, 0 }, "player.png");
 
     game.player = entity;
 
@@ -318,12 +307,15 @@ int main()
         }
 
         glm::mat4 projection = glm::mat4(1.0f);
+        glm::mat4 view = glm::mat4(1.0f);
         
         projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
         projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
         projection = glm::scale(projection, glm::vec3(camera.zoom, camera.zoom, 1.0f));
 
-        glUseProgram(chunk_program);
+        view = afx::camera_view_matrix(&camera);
+
+        glUseProgram(chunk_program);    
 
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
@@ -336,7 +328,7 @@ int main()
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
 
             glUniform1i(sampler0_location, 0);
-            glUniform1i(sampler1_location, 1); 
+            glUniform1i(sampler1_location, 1);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tiles_sheet.texture);
@@ -353,14 +345,10 @@ int main()
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
             model = glm::scale(model, glm::vec3(chunk_size, chunk_size, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
-    
-            glm::mat4 view = glm::mat4(1.0f);
 
-            view = camera_view_matrix(&camera);
-
-            setConstant(chunk_program, "model", model);
-            setConstant(chunk_program, "view", view);
-            setConstant(chunk_program, "projection", projection);
+            afx::setConstant(chunk_program, "model", model);
+            afx::setConstant(chunk_program, "view", view);
+            afx::setConstant(chunk_program, "projection", projection);
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
          }
@@ -402,10 +390,12 @@ int main()
             }
             else
             {
-                entity_scale.x = entity->sprite.width;
-                entity_scale.y = entity->sprite.height;
+                Sprite* frame = &entity->animation.frames[0];
 
-                glBindTexture(GL_TEXTURE_2D, entity->sprite.texture);
+                entity_scale.x = frame->width;
+                entity_scale.y = frame->height;
+
+                glBindTexture(GL_TEXTURE_2D, frame->texture);
             }
 
             glEnable(GL_BLEND);
@@ -428,12 +418,10 @@ int main()
 
             model = glm::translate(model, glm::vec3(entity->position.x, entity->position.y, 0.0f));
             model = glm::scale(model, glm::vec3(entity_scale.x, entity_scale.y, 1.0));
-        
-            glm::mat4 view = camera_view_matrix(&camera);
 
-            setConstant(program, "model", model);
-            setConstant(program, "view", view);
-            setConstant(program, "projection", projection);
+            afx::setConstant(program, "model", model);
+            afx::setConstant(program, "view", view);
+            afx::setConstant(program, "projection", projection);
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 

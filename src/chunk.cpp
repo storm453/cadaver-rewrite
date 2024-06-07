@@ -1,6 +1,6 @@
 #include "mathe.hpp"
 #include "chunk.hpp"
-#include "game.hpp"
+#include "main.hpp"
 #include "math.h"
 
 V2i get_chunk_index(float x, float y)

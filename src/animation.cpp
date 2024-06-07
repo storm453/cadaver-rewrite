@@ -2,7 +2,7 @@
 
 #include "animation.hpp"
 #include "entity.hpp"
-#include "game.hpp"
+#include "main.hpp"
 
 #include <iostream>
 #include <fstream>

@@ -3,10 +3,22 @@
 #include <cstdint>
 #include <stdio.h>
 
+#include <glm/glm.hpp>
 #include <glad/glad.h>
 
 namespace afx 
 {
+    glm::mat4 camera_view_matrix(const Camera* my_camera)
+    {  
+        return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
+    }
+
+    void setConstant(unsigned int program, const char* location, glm::mat4 data)
+    {
+        unsigned int uniform_location = glGetUniformLocation(program, location);
+        glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(data));
+    }
+
     unsigned int shaderProgram(const char *vertex_shader_source, const char *fragment_shader_source) 
     {
         unsigned int program, vertex_shader, fragment_shader;
