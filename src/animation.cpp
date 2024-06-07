@@ -1,6 +1,7 @@
-#include "animation.h"
-#include "entity.h"
 #include <stdio.h>
+
+#include "animation.hpp"
+#include "entity.hpp"
 
 Sprite* step_animation(Animation* animation, float time_step)
 {
@@ -11,7 +12,6 @@ Sprite* step_animation(Animation* animation, float time_step)
     if(current_frame >= animation->frame_count)
     {
         animation->dirty = true;
-            
         animation->playback_time = 0;
 
         current_frame = 0;

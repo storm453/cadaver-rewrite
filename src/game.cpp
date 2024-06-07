@@ -13,12 +13,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "window.h"
-#include "entity.h"
-#include "game.h"
-#include "animation.h"
-#include "chunk.h"
-#include "entity.h"
+#include "window.hpp"
+#include "entity.hpp"
+#include "game.hpp"
+#include "animation.hpp"
+#include "chunk.hpp"
+#include "entity.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION   
 
@@ -351,7 +351,7 @@ int main()
     anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
 
     anim_player_swing.frame_count = 3;
-    anim_player_swing.frame_rate = 0.001;
+    anim_player_swing.frame_rate = 0.1;
 
     game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
@@ -361,7 +361,7 @@ int main()
     game.player->player.run_animation = &anim_player_run;
     game.player->player.stab_animation = &anim_player_attack;
     game.player->player.swing_animation = &anim_player_swing;
-
+    
     while(game.window.running)
     {
         unsigned int start_time = SDL_GetTicks();

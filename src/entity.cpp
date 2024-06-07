@@ -3,8 +3,8 @@
 #include <iostream>
 #include <cmath>
 
-#include "entity.h"
-#include "game.h"
+#include "entity.hpp"
+#include "game.hpp"
 
 int find_free_entity()
 {
@@ -58,17 +58,7 @@ void player_attack(Entity* entity)
     {
         game.window.input.mouse_down = false;
         
-        if(entity->player.combo >= 3)
-        {
-            entity->player.state = PlayerState::stab;
-            entity->player.combo = 0;
-        }
-        else
-        {
-            entity->player.state = PlayerState::swing;
-        }
-        
-        entity->player.combo++;
+        entity->player.state = PlayerState::swing;
         entity->animation.playback_time = 0;
     }
 }

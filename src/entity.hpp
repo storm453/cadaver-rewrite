@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mathe.h"
-#include "animation.h"
+#include "mathe.hpp"
+#include "animation.hpp"
 
 enum EntityType
 {
@@ -39,7 +39,6 @@ struct Entity
     struct 
     { 
         float hp;
-        int combo = 0;
         PlayerState state = PlayerState::idle;
         Animation* idle_animation;
         Animation* walk_animation;

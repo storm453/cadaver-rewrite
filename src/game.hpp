@@ -1,6 +1,6 @@
 #pragma once
-#include "window.h"
-#include "entity.h"
+#include "window.hpp"
+#include "entity.hpp"
 #include <glm/glm.hpp>
 
 #define max_entity_count 999
