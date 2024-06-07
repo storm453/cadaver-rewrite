@@ -1,5 +1,4 @@
 #include "window.hpp"
-#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
 void init_window(Window* window)

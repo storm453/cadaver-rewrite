@@ -1,1 +1,1 @@
-clang++ src/*.cpp -o tynebourne -Iinclude -Llib -lSDL2 -g
+clang++ src/*.cpp -o tynebourne -Iinclude -Llib -lSDL2 -DSDL_MAIN_HANDLED -DSTB_IMAGE_IMPLEMENTATION -g

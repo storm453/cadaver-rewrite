@@ -8,22 +8,9 @@ struct Sprite
     int width, height;
 };
 
-enum struct TriggerType
-{
-    none,
-    state,
-    hitbox
-};
-
-struct Trigger
-{
-    TriggerType type = TriggerType::none;
-};
-
 struct Animation
 {
     Sprite frames[128];
-    TriggerType triggers[128];
     int frame_count;
     float frame_rate;
     float playback_time;
@@ -33,3 +20,4 @@ struct Animation
 Sprite make_sprite(const char* filename);
 Sprite* step_animation(Animation* animation, float time_step);
 void switch_animation(Entity* entity, Animation* new_animation);
+Animation make_animation_txt(const char* filename);

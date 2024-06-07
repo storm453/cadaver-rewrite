@@ -4,9 +4,7 @@
 #include <iostream>
 #include <chrono>
 
-#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
-
 #include <glad/glad.h>
 
 #include <glm/glm.hpp>
@@ -20,9 +18,9 @@
 #include "chunk.hpp"
 #include "entity.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION   
-
 #include "stb_image.h"
+
+#include "afx.hpp"
 
 static const char* vertex_shader_source =
     "#version 330 core\n"
@@ -62,69 +60,6 @@ static const char* lmars_fragment_source =
 Game game;
 Camera camera;
 Chunk chunks_array[999];
-
-unsigned int shader_program(const char *vertex_shader_source, const char *fragment_shader_source) 
-{
-    unsigned int program, vertex_shader, fragment_shader;
-
-    //vertex shader
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-    glCompileShader(vertex_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-    glCompileShader(fragment_shader);
-
-    int success;
-
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-
-    if(!success)
-    {
-        char error_message[1024];
-
-        glGetShaderInfoLog(fragment_shader, sizeof(error_message), NULL, error_message);
-
-        printf("FRAGMENT ERROR %s \n", error_message);
-    }
-
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-
-    if(!success)
-    {
-        char error_message[1024];
-
-        glGetShaderInfoLog(vertex_shader, sizeof(error_message), NULL, error_message);
-
-        printf("VERTEX ERROR %s \n", error_message);
-    }
-
-    program = glCreateProgram();
-
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-
-    glLinkProgram(program);
-
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-    if(!success)
-    {
-        char error_message[1024];
-
-        glGetProgramInfoLog(program, sizeof(error_message), NULL, error_message);
-
-        printf("PROGRAM ERROR %s \n", error_message);
-    }
-
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);  
-
-    return program;
-}
 
 Sprite make_sprite(const char* filename)
 {
@@ -231,6 +166,8 @@ void setConstant(unsigned int program, const char* location, glm::mat4 data)
 
 int main()
 {
+    make_animation_txt("player_walk.txt");
+
     init_window(&game.window);
 
     if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) 
@@ -241,12 +178,12 @@ int main()
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(entity_player, Vec2{0, 0}, "player.png");
+    *entity = make_entity(entity_player, Vec2{ 0, 0 }, "player.png");
 
     game.player = entity;
 
-    unsigned int program = shader_program(vertex_shader_source, fragment_shader_source);
-    unsigned int chunk_program = shader_program(vertex_shader_source, lmars_fragment_source);
+    unsigned int program = afx::shaderProgram(vertex_shader_source, fragment_shader_source);
+    unsigned int chunk_program = afx::shaderProgram(vertex_shader_source, lmars_fragment_source);
     
     unsigned int vao;
     
