@@ -18,8 +18,6 @@
 #include "chunk.hpp"
 #include "entity.hpp"
 
-#include "stb_image.h"
-
 #include "afx.hpp"
 
 static const char* vertex_shader_source =
@@ -60,30 +58,6 @@ static const char* lmars_fragment_source =
 Game game;
 Camera camera;
 Chunk chunks_array[999];
-
-Sprite make_sprite(const char* filename)
-{
-    Sprite temp;
-    
-    glGenTextures(1, &temp.texture);
-    glBindTexture(GL_TEXTURE_2D, temp.texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    int width, height, nrChannels;
-    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
-
-    temp.width = width;
-    temp.height = height;
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    stbi_image_free(data);
-
-    return temp;
-}
 
 //NOISE FUNCTION
 static int SEED = std::time(0);
@@ -166,8 +140,6 @@ void setConstant(unsigned int program, const char* location, glm::mat4 data)
 
 int main()
 {
-    make_animation_txt("player_walk.txt");
-
     init_window(&game.window);
 
     if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) 
@@ -228,67 +200,26 @@ int main()
     Animation anim_player_idle;
     Animation anim_player_run;
     Animation anim_player_walk;
-    Animation anim_player_attack;
     Animation anim_player_swing;
+    Animation anim_player_stab;
 
-    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle1.png");
-    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle2.png");
-    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle3.png");
-    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle4.png");
-    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle5.png");
-    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle6.png");
-    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle7.png");
-    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle8.png");
-    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle9.png");
-    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle10.png");
+    anim_player_idle = make_animation_txt("player_idle.txt");
+    anim_player_run = make_animation_txt("player_run.txt");
+    anim_player_walk = make_animation_txt("player_walk.txt");
+    anim_player_swing = make_animation_txt("player_swing.txt");
 
-    anim_player_idle.frame_count = 10;
-    anim_player_idle.frame_rate = 0.1;
-  
-    anim_player_run.frames[0] = make_sprite("assets/player/playerrun0.png");
-    anim_player_run.frames[1] = make_sprite("assets/player/playerrun1.png");
-    anim_player_run.frames[2] = make_sprite("assets/player/playerrun2.png");
-    anim_player_run.frames[3] = make_sprite("assets/player/playerrun3.png");
-    anim_player_run.frames[4] = make_sprite("assets/player/playerrun4.png");
-    anim_player_run.frames[5] = make_sprite("assets/player/playerrun5.png");
-    anim_player_run.frames[6] = make_sprite("assets/player/playerrun6.png");
-    anim_player_run.frames[7] = make_sprite("assets/player/playerrun7.png");
-    anim_player_run.frames[8] = make_sprite("assets/player/playerrun8.png");
-    
-    anim_player_run.frame_count = 9;
-    anim_player_run.frame_rate = 0.1;
-
-    anim_player_walk.frames[0] = make_sprite("assets/player/playerwalk0.png");
-    anim_player_walk.frames[1] = make_sprite("assets/player/playerwalk1.png");
-    anim_player_walk.frames[2] = make_sprite("assets/player/playerwalk2.png");
-    anim_player_walk.frames[3] = make_sprite("assets/player/playerwalk3.png");
-    anim_player_walk.frames[4] = make_sprite("assets/player/playerwalk4.png");
-    anim_player_walk.frames[5] = make_sprite("assets/player/playerwalk5.png");
-    anim_player_walk.frames[6] = make_sprite("assets/player/playerwalk6.png");
-    anim_player_walk.frames[7] = make_sprite("assets/player/playerwalk7.png");
-
-    anim_player_walk.frame_count = 8;
-    anim_player_walk.frame_rate = 0.1;
-
-    anim_player_attack.frames[0] = make_sprite("assets/player/playerattack0.png");
-    anim_player_attack.frames[1] = make_sprite("assets/player/playerattack1.png");
+    anim_player_stab.frames[0] = make_sprite("assets/player/playerattack0.png");
+    anim_player_stab.frames[1] = make_sprite("assets/player/playerattack1.png");
     
     for(int i = 2; i < 7; i++)
     {
-        anim_player_attack.frames[i] = make_sprite("assets/player/playerattack2.png");
+        anim_player_stab.frames[i] = make_sprite("assets/player/playerattack2.png");
     }
 
-    anim_player_attack.frames[7] = make_sprite("assets/player/playerattack3.png");
+    anim_player_stab.frames[7] = make_sprite("assets/player/playerattack3.png");
 
-    anim_player_attack.frame_count = 8;
-    anim_player_attack.frame_rate = 0.05;
-
-    anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
-    anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
-    anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
-
-    anim_player_swing.frame_count = 3;
-    anim_player_swing.frame_rate = 0.1;
+    anim_player_stab.frame_count = 8;
+    anim_player_stab.frame_rate = 0.05;
 
     game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
@@ -296,7 +227,7 @@ int main()
     game.player->player.idle_animation = &anim_player_idle;
     game.player->player.walk_animation = &anim_player_walk;
     game.player->player.run_animation = &anim_player_run;
-    game.player->player.stab_animation = &anim_player_attack;
+    game.player->player.stab_animation = &anim_player_stab;
     game.player->player.swing_animation = &anim_player_swing;
     
     while(game.window.running)

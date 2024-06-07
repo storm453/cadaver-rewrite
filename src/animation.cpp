@@ -8,6 +8,33 @@
 #include <fstream>
 #include <string>
 
+#include <glad/glad.h>
+#include "stb_image.h"
+
+Sprite make_sprite(const char* filename)
+{
+    Sprite temp;
+    
+    glGenTextures(1, &temp.texture);
+    glBindTexture(GL_TEXTURE_2D, temp.texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+
+    temp.width = width;
+    temp.height = height;
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+
+    return temp;
+}
+
 Sprite* step_animation(Animation* animation, float time_step)
 {
     animation->playback_time += time_step;
@@ -51,7 +78,7 @@ Animation make_animation_txt(const char* filename)
     std::ifstream file(string_name);
 
     std::string line;
-    std::string data[3];
+    std::string data[4];
 
     int iterator = 0;
 
@@ -75,9 +102,9 @@ Animation make_animation_txt(const char* filename)
     {
         std::string frame = data[0] + std::to_string(i) + data[1];
 
-        std::cout << frame << "\n";
-
-        //temp.frames[0] = make_sprite("assets/player/playeridle1.png");
+        temp.frames[i] = make_sprite(frame.c_str());
+        temp.frame_count = loop;
+        temp.frame_rate = stof(data[3]);
     }
 
     return temp;
