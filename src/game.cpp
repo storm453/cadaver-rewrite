@@ -7,14 +7,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
-#if defined(__WIN32__)
 #include <glad/glad.h>
-#endif
-
-#if defined(__APPLE__)
-#define GL_SILENCE_DEPRECATION
-#include <OpenGL/gl3.h>
-#endif
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -240,14 +233,10 @@ int main()
 {
     init_window(&game.window);
 
-    #if defined(__WIN32__)
-        //load glad
-        if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) 
-        {
-            throw(std::string("Failed to initialize GLAD"));
-        }
-    #endif
-
+    if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) 
+    {
+        throw(std::string("Failed to initialize GLAD"));
+    }
 
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
@@ -362,7 +351,7 @@ int main()
     anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
 
     anim_player_swing.frame_count = 3;
-    anim_player_swing.frame_rate = 0.1;
+    anim_player_swing.frame_rate = 0.001;
 
     game.player->animation = anim_player_idle;
     game.player->animation_enabled = true;
