@@ -40,11 +40,11 @@ void player_movement(Entity* entity, float speed)
     target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
     target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
     
-    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 10 * game.delta_time;
-    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 10 * game.delta_time;
+    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 500 * game.delta_time;
+    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 500 * game.delta_time;
 
-    entity->position.x += entity->velocity.x * game.delta_time;
-    entity->position.y += entity->velocity.y * game.delta_time;
+    entity->position.x += target_velocity.x * 10 * game.delta_time; //entity->velocity.x * game.delta_time;
+    entity->position.y += target_velocity.y * 10  * game.delta_time; //entity->velocity.y * game.delta_time;
 }
 
 void player_attack(Entity* entity)
@@ -52,9 +52,9 @@ void player_attack(Entity* entity)
     if(game.window.input.mouse_down)
     {
         game.window.input.mouse_down = false;
-        
-        entity->player.state = PlayerState::swing;
+
         entity->animation.playback_time = 0;
+        entity->player.state = PlayerState::swing;
     }
 }
 
@@ -127,8 +127,8 @@ void entity_update(Entity* entity)
 
                     if(entity->animation.dirty)
                     {
-                        entity->animation.dirty = false;
-                        entity->player.state = PlayerState::idle;
+                        // entity->animation.dirty = false;
+                        // entity->player.state = PlayerState::idle;
                     }
 
                     switch_animation(entity, entity->player.stab_animation);
@@ -155,15 +155,19 @@ void entity_update(Entity* entity)
 
             V2 diff;
 
-            diff.x = game.player->position.x - entity->position.x;
-            diff.y = game.player->position.y - entity->position.y;
 
-            float norm = length(diff);
-
-            if(norm != 0)
+            if(game.player != NULL) 
             {
-                entity->position.x += (diff.x / norm) * chase_speed;
-                entity->position.y += (diff.y / norm) * chase_speed;
+                diff.x = game.player->position.x - entity->position.x;
+                diff.y = game.player->position.y - entity->position.y;
+
+                float norm = length(diff);
+
+                if(norm != 0)
+                {
+                    entity->position.x += (diff.x / norm) * chase_speed;
+                    entity->position.y += (diff.y / norm) * chase_speed;
+                }
             }
         }
         break;

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iostream>
 #include <chrono>
+#include <stdint.h>
 
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
@@ -195,7 +196,18 @@ int main()
     anim_player_idle = make_animation_txt("player_idle.txt");
     anim_player_run = make_animation_txt("player_run.txt");
     anim_player_walk = make_animation_txt("player_walk.txt");
-    anim_player_swing = make_animation_txt("player_swing.txt");
+
+    anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
+    anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
+    anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
+
+    for(int i = 3; i < 5; i++)
+    {
+        anim_player_swing.frames[i] = make_sprite("assets/player/playerswing2.png");
+    }
+
+    anim_player_swing.frame_count = 5;
+    anim_player_swing.frame_rate = 0.1;
 
     anim_player_stab.frames[0] = make_sprite("assets/player/playerattack0.png");
     anim_player_stab.frames[1] = make_sprite("assets/player/playerattack1.png");
@@ -210,18 +222,23 @@ int main()
     anim_player_stab.frame_count = 8;
     anim_player_stab.frame_rate = 0.05;
 
-    game.player->animation = anim_player_idle;
-    game.player->animation_enabled = true;
+    if(game.player != NULL) 
+    {
+        game.player->animation = anim_player_idle;
+        game.player->animation_enabled = true;
 
-    game.player->player.idle_animation = &anim_player_idle;
-    game.player->player.walk_animation = &anim_player_walk;
-    game.player->player.run_animation = &anim_player_run;
-    game.player->player.stab_animation = &anim_player_stab;
-    game.player->player.swing_animation = &anim_player_swing;
+        game.player->player.idle_animation = &anim_player_idle;
+        game.player->player.walk_animation = &anim_player_walk;
+        game.player->player.run_animation = &anim_player_run;
+        game.player->player.stab_animation = &anim_player_stab;
+        game.player->player.swing_animation = &anim_player_swing;
+    }
     
     while(game.window.running)
     {
         unsigned int start_time = SDL_GetTicks();
+
+        std::uint64_t profile_start = SDL_GetPerformanceCounter();
 
         update_window(&game.window);
 
@@ -234,74 +251,79 @@ int main()
             game.window.input.wheel = false;
         }
 
-        V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
-        
-        for(int i = -chunk_load; i <= chunk_load; i++)
+        if(game.player != NULL)
         {
-            for(int j = -chunk_load; j <= chunk_load; j++)
+            V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
+            
+            for(int i = -chunk_load; i <= chunk_load; i++)
             {
-                V2i loop_chunk_index = { chunk_index.x + i, chunk_index.y + j };
-
-                Chunk* check_chunk = lookup_chunk(loop_chunk_index, array_size(chunks_array), chunks_array);
-
-                if(check_chunk == NULL)
+                for(int j = -chunk_load; j <= chunk_load; j++)
                 {
-                    //chunk doesn't exist, make it
-                    Chunk* new_chunk = find_free_chunk_slot(array_size(chunks_array), chunks_array);
-                    
-                    if(new_chunk != NULL)
+                    V2i loop_chunk_index = { chunk_index.x + i, chunk_index.y + j };
+
+                    Chunk* check_chunk = lookup_chunk(loop_chunk_index, array_size(chunks_array), chunks_array);
+
+                    if(check_chunk == NULL)
                     {
-                        float noise_x = loop_chunk_index.x + 999;
-                        float noise_y = loop_chunk_index.y + 999;
+                        //chunk doesn't exist, make it
+                        Chunk* new_chunk = find_free_chunk_slot(array_size(chunks_array), chunks_array);
                         
-                        new_chunk->index = loop_chunk_index;
-                        new_chunk->exists = true;
-
-                        //tiles
-                        for(int  k = 0; k < chunk_tiles * chunk_tiles; k++)
+                        if(new_chunk != NULL)
                         {
-                            int tile_x = k % chunk_tiles;
-                            int tile_y = floor(k / chunk_tiles);
+                            float noise_x = loop_chunk_index.x + 999;
+                            float noise_y = loop_chunk_index.y + 999;
+                            
+                            new_chunk->index = loop_chunk_index;
+                            new_chunk->exists = true;
 
-                            float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
-                            float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
-                                                                                       
-                            float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
-
-                            TileType tile;
-
-                            if(tile_noise > 0 && tile_noise < 0.45)
+                            //tiles
+                            for(int  k = 0; k < chunk_tiles * chunk_tiles; k++)
                             {
-                                tile = tile_water;
-                            }
-                            else if(tile_noise > 0.45 && tile_noise < 0.6)
-                            {
-                                tile = tile_dirt;
-                            }
-                            else if(tile_noise > 0.6 && tile_noise < 0.7)
-                            {
-                                tile = tile_grass;
-                            }
-                            else if(tile_noise > 0.7)
-                            {
-                                tile = tile_stone;
+                                int tile_x = k % chunk_tiles;
+                                int tile_y = floor(k / chunk_tiles);
+
+                                float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
+                                float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
+                                                                                        
+                                //float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
+
+                                float tile_noise = 0.5;
+
+                                TileType tile;
+
+                                if(tile_noise > 0 && tile_noise < 0.45)
+                                {
+                                    tile = tile_water;
+                                }
+                                else if(tile_noise > 0.45 && tile_noise < 0.6)
+                                {
+                                    tile = tile_dirt;
+                                }
+                                else if(tile_noise > 0.6 && tile_noise < 0.7)
+                                {
+                                    tile = tile_grass;
+                                }
+                                else if(tile_noise > 0.7)
+                                {
+                                    tile = tile_stone;
+                                }
+
+                                new_chunk->tiles[k] = tile;
                             }
 
-                            new_chunk->tiles[k] = tile;
-                        }
+                            glGenTextures(1, &new_chunk->tileTexture);
+                            glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
 
-                        glGenTextures(1, &new_chunk->tileTexture);
-                        glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
-
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                        
-                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);                   
-                  }
-                }
-                else
-                {
-                    //DO THIS LALREADY BRUH
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                            
+                            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);                   
+                    }
+                    }
+                    else
+                    {
+                        //DO THIS LALREADY BRUH
+                    }
                 }
             }
         }
@@ -327,7 +349,7 @@ int main()
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
 
-            glUniform1i(sampler0_location, 0);
+            glUniform1i(sampler0_location, 0); 
             glUniform1i(sampler1_location, 1);
 
             glActiveTexture(GL_TEXTURE0);
@@ -404,9 +426,6 @@ int main()
             glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
-            float entity_x = (entity->position.x);
-            float entity_y = (entity->position.y);
-
             int scale = 1;
 
             if(entity->velocity.x < 0)
@@ -430,15 +449,28 @@ int main()
 
         unsigned int end_time = SDL_GetTicks();
 
-        float target_x = game.player->position.x;
-        float target_y = game.player->position.y;
+        std::uint64_t profile_end = SDL_GetPerformanceCounter();
 
-        camera.pos.x = lerp(camera.pos.x, target_x, 0.05);
-        camera.pos.y = lerp(camera.pos.y, target_y, 0.05);
+        std::uint64_t profile_diff = profile_end - profile_start;
 
-        game.delta_time = (end_time - start_time) / 1000.0f;
+        if(game.player != NULL) 
+        {
+            float target_x = game.player->position.x;
+            float target_y = game.player->position.y;
+
+            camera.pos.x = lerp(camera.pos.x, target_x, 0.05);
+            camera.pos.y = lerp(camera.pos.y, target_y, 0.05);
+        }
+
+        //game.delta_time = (end_time - start_time) / 1000.0f;
+
+        game.delta_time = profile_diff / ((float) SDL_GetPerformanceFrequency());
 
         SDL_GL_SwapWindow(game.window.window);
+
+        float fps = 1000 / game.delta_time;
+
+        std::cout << game.delta_time << " DT" << "\n";
     }
     
     SDL_GL_DeleteContext(game.window.context);
