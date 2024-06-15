@@ -142,7 +142,7 @@ int main()
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(EntityType::PLAYER, V2{ 0, 0 });
+    *entity = make_entity(V2{ 0, 0 }, FLAG_PLAYER | FLAG_CHARACTER);
 
     game.player = entity;
 
@@ -151,10 +151,9 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(EntityType::ENEMY, V2{ 10, 0 });
+        *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER);
 
         entity->animation = make_animation_txt("player_walk.txt");
-        entity->animation_enabled = true;
         entity->animation.frame_rate = 0.15;
     }
 
@@ -392,7 +391,7 @@ int main()
         {
             Entity* entity = &game.entities[i];
 
-            if(entity->type == EntityType::NONE) continue;
+            if(entity->flags == FLAG_NONE) continue;
 
             entity_update(entity);
 

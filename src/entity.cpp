@@ -10,7 +10,7 @@ int find_free_entity()
 {
     for(int i = 0; i < max_entity_count; i++)
     {
-        if(game.entities[i].type == EntityType::NONE)
+        if(game.entities[i].flags == FLAG_NONE)
         {
             return i;
         }
@@ -19,13 +19,12 @@ int find_free_entity()
     return -1;
 }
 
-Entity make_entity(EntityType entityType, V2 entityPos)
+Entity make_entity(V2 position, unsigned int flags)
 {
     Entity temp = {};
 
-    temp.type = entityType;
-    temp.position.x = entityPos.x;
-    temp.position.y = entityPos.y;
+    temp.position = position;
+    temp.flags = flags;
     
     return temp;
 }
@@ -63,7 +62,7 @@ void entity_update(Entity* entity)
     const int ACCEL = 100;
 
     //handle target velocity
-    if((entity->type == EntityType::PLAYER) || (entity->type == EntityType::ENEMY))
+    if(entity->flags & FLAG_CHARACTER)
     {
         entity->character.velocity.x += (entity->character.target_velocity.x - entity->character.velocity.x) * ACCEL * game.delta_time;
         entity->character.velocity.y += (entity->character.target_velocity.y - entity->character.velocity.y) * ACCEL * game.delta_time;
@@ -72,105 +71,88 @@ void entity_update(Entity* entity)
         entity->position.y += entity->character.velocity.y * game.delta_time;
     }
 
-    switch(entity->type)
+    if(entity->flags & FLAG_PLAYER)
     {
-        case(EntityType::PLAYER):
+        switch(entity->player.state)
         {
-            switch(entity->player.state)
-            {
-                case(PlayerState::idle): {
-                    player_movement(entity, player_walk_speed);
-                    player_attack(entity);
+            case(PlayerState::idle): {
+                player_movement(entity, player_walk_speed);
+                player_attack(entity);
 
-                    if(length(entity->character.velocity) > player_walk_speed / 2)
-                    {
-                        entity->player.state = PlayerState::walk;
-                    }
+                if(length(entity->character.velocity) > player_walk_speed / 2)
+                {
+                    entity->player.state = PlayerState::walk;
+                }
 
-                    switch_animation(entity, entity->player.idle_animation);
-                } break; 
+                switch_animation(entity, entity->player.idle_animation);
+            } break; 
 
-                case(PlayerState::walk): {
-                    player_movement(entity, player_walk_speed);
-                    player_attack(entity);
+            case(PlayerState::walk): {
+                player_movement(entity, player_walk_speed);
+                player_attack(entity);
 
-                    if(length(entity->character.velocity) < player_walk_speed / 2)
-                    {
-                        entity->player.state = PlayerState::idle;
-                    }
-                    if(game.window.input.shift)
-                    {
-                        entity->player.state = PlayerState::run;
-                    }
+                if(length(entity->character.velocity) < player_walk_speed / 2)
+                {
+                    entity->player.state = PlayerState::idle;
+                }
+                if(game.window.input.shift)
+                {
+                    entity->player.state = PlayerState::run;
+                }
 
-                    switch_animation(entity, entity->player.walk_animation);
-                } break;
+                switch_animation(entity, entity->player.walk_animation);
+            } break;
 
-                case(PlayerState::run): {
-                    player_movement(entity, player_run_speed);
-                    player_attack(entity);
+            case(PlayerState::run): {
+                player_movement(entity, player_run_speed);
+                player_attack(entity);
 
-                    if(length(entity->character.velocity) < player_walk_speed / 2)
-                    {
-                        entity->player.state = PlayerState::idle;
-                    }
-                    if(!game.window.input.shift)
-                    {
-                        entity->player.state = PlayerState::walk;
-                    }
+                if(length(entity->character.velocity) < player_walk_speed / 2)
+                {
+                    entity->player.state = PlayerState::idle;
+                }
+                if(!game.window.input.shift)
+                {
+                    entity->player.state = PlayerState::walk;
+                }
 
-                    switch_animation(entity, entity->player.run_animation);
-                } break;
+                switch_animation(entity, entity->player.run_animation);
+            } break;
 
-                case(PlayerState::swing): {
-                    player_movement(entity, player_walk_speed / 2);
-                    switch_animation(entity, entity->player.swing_animation);
+            case(PlayerState::swing): {
+                player_movement(entity, player_walk_speed / 2);
+                switch_animation(entity, entity->player.swing_animation);
 
-                    //check if the animation is done
-                    if(finished_animation(&entity->animation))
-                    {
-                        entity->player.state = PlayerState::idle;
-                    }
-                } break;
+                //check if the animation is done
+                if(finished_animation(&entity->animation))
+                {
+                    entity->player.state = PlayerState::idle;
+                }
+            } break;
 
-                case(PlayerState::stab): {
-                    entity->character.target_velocity = {0, 0};
-                    switch_animation(entity, entity->player.stab_animation);
+            case(PlayerState::stab): {
+                entity->character.target_velocity = {0, 0};
+                switch_animation(entity, entity->player.stab_animation);
 
-                    //check if the animation is done
-                    if(finished_animation(&entity->animation))
-                    {
-                        entity->player.state = PlayerState::idle;
-                    }
-                } break;
-            }
+                //check if the animation is done
+                if(finished_animation(&entity->animation))
+                {
+                    entity->player.state = PlayerState::idle;
+                }
+            } break;
         }
-        break;
+    }
 
-        case(EntityType::NONE):
+    if(entity->flags & FLAG_ENEMY)
+    {
+        float chase_speed = 80;
+
+        if(game.player != NULL) 
         {
-            
+            V2 move = normalize(sub(game.player->position, entity->position));
+
+            entity->character.target_velocity.x = move.x * chase_speed;
+            entity->character.target_velocity.y = move.y * chase_speed;
         }
-        break;
-
-        case(EntityType::OBJECT):
-        {
-            
-        }   
-        break;
-
-        case(EntityType::ENEMY):
-        {
-            float chase_speed = 80;
-
-            if(game.player != NULL) 
-            {
-                V2 move = normalize(sub(game.player->position, entity->position));
-
-                entity->character.target_velocity.x = move.x * chase_speed;
-                entity->character.target_velocity.y = move.y * chase_speed;
-            }
-        }
-        break;
     }
 }

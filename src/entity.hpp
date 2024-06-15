@@ -5,10 +5,18 @@
 
 enum struct EntityType
 {
-    NONE = 0x01,
-    OBJECT = 0x02,
-    PLAYER = 0x04,
-    ENEMY = 0x08
+    NONE   = 0,
+    OBJECT,
+    PLAYER,
+    ENEMY
+};
+
+enum EntityFlags
+{
+    FLAG_NONE      = 0,
+    FLAG_CHARACTER = 0x01,
+    FLAG_PLAYER    = 0x02,
+    FLAG_ENEMY     = 0x04
 };
 
 enum struct PlayerState
@@ -22,11 +30,10 @@ enum struct PlayerState
 
 struct Entity
 {
-    EntityType type = EntityType::NONE;
-    unsigned int flags;
     V2 position = {0, 0};
+    unsigned int flags;
     bool render = true;
-    bool animation_enabled = false;
+    bool animation_enabled = true;
     Animation animation;
     struct 
     {
@@ -54,5 +61,5 @@ constexpr float player_walk_speed = 100.0f;
 constexpr float player_run_speed = 300.0f;
 
 int find_free_entity();
-Entity make_entity(EntityType entityType, V2 entityPos);
+Entity make_entity(V2 position, unsigned int flags);
 void entity_update(Entity* entity);
