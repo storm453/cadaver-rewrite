@@ -14,7 +14,6 @@ struct Animation
     int frame_count;
     float frame_rate;
     float playback_time;
-    bool dirty;
 };
 
 Sprite make_sprite(const char* filename);

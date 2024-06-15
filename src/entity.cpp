@@ -122,21 +122,26 @@ void entity_update(Entity* entity)
                 } break;
 
                 case(PlayerState::swing): {
-                    if(entity->animation.dirty)
-                    {
-                        entity->animation.dirty = false;
-                        entity->player.state = PlayerState::idle;
-                    }
-
                     switch_animation(entity, entity->player.swing_animation);
+
+                    //check if the animation is done
+                    if(entity->animation.frame_rate != 0)
+                    {
+                        int current_frame = (int)(entity->animation.playback_time / entity->animation.frame_rate);
+        
+                        if(current_frame >= entity->animation.frame_count)
+                        {
+                            entity->player.state = PlayerState::idle;
+                        }
+                    }
                 } break;
 
                 case(PlayerState::stab): {
-                   if(entity->animation.dirty)
-                    {
-                        entity->animation.dirty = false;
-                        entity->player.state = PlayerState::idle;
-                    }
+                    // if(entity->animation.dirty)
+                    // {
+                    //     entity->animation.dirty = false;
+                    //     entity->player.state = PlayerState::idle;
+                    // }
 
                     switch_animation(entity, entity->player.stab_animation);
                 } break;

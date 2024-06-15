@@ -45,7 +45,7 @@ Sprite* step_animation(Animation* animation, float time_step)
     {
         if(animation->playback_time != 0)
         {
-            animation->dirty = true;
+            //animation->dirty = true;
             animation->playback_time = 0;
 
             current_frame = 0;
@@ -61,9 +61,6 @@ void switch_animation(Entity* entity, Animation* new_animation)
 
     entity->animation = *new_animation;
     entity->animation.playback_time = old_playback_time;
-
-    //make sure its not marked as dirty
-    entity->animation.dirty = false;
 }
 
 std::string char_to_string(const char* data)

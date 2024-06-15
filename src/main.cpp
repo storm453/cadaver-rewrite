@@ -478,7 +478,7 @@ int main()
 
         float fps = 1000 / game.delta_time;
 
-        std::cout << game.delta_time << " DT" << "\n";
+        //std::cout << game.delta_time << " DT" << "\n";
     }
     
     SDL_GL_DeleteContext(game.window.context);
