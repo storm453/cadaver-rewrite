@@ -55,6 +55,22 @@ Sprite* step_animation(Animation* animation, float time_step)
     return &animation->frames[current_frame];
 }
 
+bool finished_animation(Animation* animation)
+{
+    if(animation->frame_rate != 0)
+    {
+        int current_frame = (int)((animation->playback_time + game.delta_time) / animation->frame_rate);
+        
+        if(current_frame == animation->frame_count)
+        {
+            return true;
+            exit;
+        }
+    }
+
+    return false;
+}
+
 void switch_animation(Entity* entity, Animation* new_animation)
 {
     float old_playback_time = entity->animation.playback_time;

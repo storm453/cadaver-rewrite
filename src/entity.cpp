@@ -10,7 +10,7 @@ int find_free_entity()
 {
     for(int i = 0; i < max_entity_count; i++)
     {
-        if(game.entities[i].type == entity_none)
+        if(game.entities[i].type == EntityType::NONE)
         {
             return i;
         }
@@ -19,12 +19,9 @@ int find_free_entity()
     return -1;
 }
 
-Entity make_entity(EntityType entityType, V2 entityPos, const char* filename)
+Entity make_entity(EntityType entityType, V2 entityPos)
 {
     Entity temp = {};
-
-    temp.velocity.x = 0;
-    temp.velocity.y = 0;
 
     temp.type = entityType;
     temp.position.x = entityPos.x;
@@ -35,16 +32,8 @@ Entity make_entity(EntityType entityType, V2 entityPos, const char* filename)
 
 void player_movement(Entity* entity, float speed)
 {
-    V2 target_velocity;
-
-    target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
-    target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
-    
-    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 100 * game.delta_time;
-    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 100 * game.delta_time;
-
-    entity->position.x += entity->velocity.x * game.delta_time;
-    entity->position.y += entity->velocity.y * game.delta_time;
+    entity->character.target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
+    entity->character.target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
 }
 
 void player_attack(Entity* entity)
@@ -52,6 +41,8 @@ void player_attack(Entity* entity)
     if(game.window.input.mouse_down)
     {
         game.window.input.mouse_down = false;
+
+        entity->animation.playback_time = 0;
 
         entity->player.swings++;
 
@@ -64,16 +55,26 @@ void player_attack(Entity* entity)
         {
             entity->player.state = PlayerState::swing;
         }
-
-        entity->animation.playback_time = 0;
     }
 }
 
 void entity_update(Entity* entity)
 {
+    const int ACCEL = 100;
+
+    //handle target velocity
+    if((entity->type == EntityType::PLAYER) || (entity->type == EntityType::ENEMY))
+    {
+        entity->character.velocity.x += (entity->character.target_velocity.x - entity->character.velocity.x) * ACCEL * game.delta_time;
+        entity->character.velocity.y += (entity->character.target_velocity.y - entity->character.velocity.y) * ACCEL * game.delta_time;
+
+        entity->position.x += entity->character.velocity.x * game.delta_time;
+        entity->position.y += entity->character.velocity.y * game.delta_time;
+    }
+
     switch(entity->type)
     {
-        case(entity_player):
+        case(EntityType::PLAYER):
         {
             switch(entity->player.state)
             {
@@ -81,7 +82,7 @@ void entity_update(Entity* entity)
                     player_movement(entity, player_walk_speed);
                     player_attack(entity);
 
-                    if(length(entity->velocity) > player_walk_speed / 2)
+                    if(length(entity->character.velocity) > player_walk_speed / 2)
                     {
                         entity->player.state = PlayerState::walk;
                     }
@@ -93,7 +94,7 @@ void entity_update(Entity* entity)
                     player_movement(entity, player_walk_speed);
                     player_attack(entity);
 
-                    if(length(entity->velocity) < player_walk_speed / 2)
+                    if(length(entity->character.velocity) < player_walk_speed / 2)
                     {
                         entity->player.state = PlayerState::idle;
                     }
@@ -109,7 +110,7 @@ void entity_update(Entity* entity)
                     player_movement(entity, player_run_speed);
                     player_attack(entity);
 
-                    if(length(entity->velocity) < player_walk_speed / 2)
+                    if(length(entity->character.velocity) < player_walk_speed / 2)
                     {
                         entity->player.state = PlayerState::idle;
                     }
@@ -122,64 +123,52 @@ void entity_update(Entity* entity)
                 } break;
 
                 case(PlayerState::swing): {
+                    player_movement(entity, player_walk_speed / 2);
                     switch_animation(entity, entity->player.swing_animation);
 
                     //check if the animation is done
-                    if(entity->animation.frame_rate != 0)
+                    if(finished_animation(&entity->animation))
                     {
-                        int current_frame = (int)((entity->animation.playback_time + game.delta_time) / entity->animation.frame_rate);
-                        
-                        if(current_frame == entity->animation.frame_count - 1)
-                        {
-                            entity->player.state = PlayerState::idle;
-                        }
+                        entity->player.state = PlayerState::idle;
                     }
                 } break;
 
                 case(PlayerState::stab): {
-                    // if(entity->animation.dirty)
-                    // {
-                    //     entity->animation.dirty = false;
-                    //     entity->player.state = PlayerState::idle;
-                    // }
-
+                    entity->character.target_velocity = {0, 0};
                     switch_animation(entity, entity->player.stab_animation);
+
+                    //check if the animation is done
+                    if(finished_animation(&entity->animation))
+                    {
+                        entity->player.state = PlayerState::idle;
+                    }
                 } break;
             }
         }
         break;
 
-        case(entity_none):
+        case(EntityType::NONE):
         {
             
         }
         break;
 
-        case(entity_object):
+        case(EntityType::OBJECT):
         {
             
         }   
         break;
 
-        case(entity_enemy):
+        case(EntityType::ENEMY):
         {
-            float chase_speed = 0.1;
-
-            V2 diff;
-
+            float chase_speed = 80;
 
             if(game.player != NULL) 
             {
-                diff.x = game.player->position.x - entity->position.x;
-                diff.y = game.player->position.y - entity->position.y;
+                V2 move = normalize(sub(game.player->position, entity->position));
 
-                float norm = length(diff);
-
-                if(norm != 0)
-                {
-                    entity->position.x += (diff.x / norm) * chase_speed;
-                    entity->position.y += (diff.y / norm) * chase_speed;
-                }
+                entity->character.target_velocity.x = move.x * chase_speed;
+                entity->character.target_velocity.y = move.y * chase_speed;
             }
         }
         break;

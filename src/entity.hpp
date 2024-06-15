@@ -3,12 +3,12 @@
 #include "mathe.hpp"
 #include "animation.hpp"
 
-enum EntityType
+enum struct EntityType
 {
-    entity_none = 0,
-    entity_object,
-    entity_player,
-    entity_enemy
+    NONE = 0x01,
+    OBJECT = 0x02,
+    PLAYER = 0x04,
+    ENEMY = 0x08
 };
 
 enum struct PlayerState
@@ -22,9 +22,9 @@ enum struct PlayerState
 
 struct Entity
 {
-    EntityType type = entity_none;
+    EntityType type = EntityType::NONE;
+    unsigned int flags;
     V2 position = {0, 0};
-    V2 velocity = {0, 0};
     bool render = true;
     bool animation_enabled = false;
     Animation animation;
@@ -39,11 +39,20 @@ struct Entity
         Animation* swing_animation;
         Animation* stab_animation;
     }player;
+    struct
+    {
+        V2 velocity = {0,0 };
+        V2 target_velocity = {0, 0};
+    } character;
+    struct
+    {
+        PlayerState state;
+    } enemy;
 };
 
 constexpr float player_walk_speed = 100.0f;
 constexpr float player_run_speed = 300.0f;
 
 int find_free_entity();
-Entity make_entity(EntityType entityType, V2 entityPos, const char* filename);
+Entity make_entity(EntityType entityType, V2 entityPos);
 void entity_update(Entity* entity);

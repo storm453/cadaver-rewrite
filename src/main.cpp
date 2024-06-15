@@ -142,9 +142,21 @@ int main()
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(entity_player, V2{ 0, 0 }, "player.png");
+    *entity = make_entity(EntityType::PLAYER, V2{ 0, 0 });
 
     game.player = entity;
+
+    //make some entities
+    for(int i = 0; i < 1; i++)
+    {
+        Entity* entity = &game.entities[find_free_entity()];
+
+        *entity = make_entity(EntityType::ENEMY, V2{ 10, 0 });
+
+        entity->animation = make_animation_txt("player_walk.txt");
+        entity->animation_enabled = true;
+        entity->animation.frame_rate = 0.15;
+    }
 
     unsigned int program = afx::shaderProgram(vertex_shader_source, fragment_shader_source);
     unsigned int chunk_program = afx::shaderProgram(vertex_shader_source, lmars_fragment_source);
@@ -202,10 +214,8 @@ int main()
     anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
     anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
     anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
-    anim_player_swing.frames[3] = make_sprite("assets/player/playerswing2.png");
-    anim_player_swing.frames[4] = make_sprite("assets/player/playerswing2.png");
 
-    anim_player_swing.frame_count = 5;
+    anim_player_swing.frame_count = 3;
     anim_player_swing.frame_rate = 0.1;
 
     anim_player_stab.frames[0] = make_sprite("assets/player/playerattack0.png");
@@ -382,7 +392,7 @@ int main()
         {
             Entity* entity = &game.entities[i];
 
-            if(entity->type == entity_none) continue;
+            if(entity->type == EntityType::NONE) continue;
 
             entity_update(entity);
 
@@ -427,7 +437,7 @@ int main()
 
             int scale = 1;
 
-            if(entity->velocity.x < 0)
+            if(entity->character.velocity.x < 0)
             {
               scale = -1;
             }

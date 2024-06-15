@@ -18,5 +18,6 @@ struct Animation
 
 Sprite make_sprite(const char* filename);
 Sprite* step_animation(Animation* animation, float time_step);
+bool finished_animation(Animation* animation);
 void switch_animation(Entity* entity, Animation* new_animation);
 Animation make_animation_txt(const char* filename);
