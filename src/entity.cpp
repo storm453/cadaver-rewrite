@@ -127,9 +127,9 @@ void entity_update(Entity* entity)
                     //check if the animation is done
                     if(entity->animation.frame_rate != 0)
                     {
-                        int current_frame = (int)(entity->animation.playback_time / entity->animation.frame_rate);
-        
-                        if(current_frame >= entity->animation.frame_count)
+                        int current_frame = (int)((entity->animation.playback_time + game.delta_time) / entity->animation.frame_rate);
+                        
+                        if(current_frame == entity->animation.frame_count - 1)
                         {
                             entity->player.state = PlayerState::idle;
                         }

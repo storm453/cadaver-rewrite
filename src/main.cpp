@@ -202,13 +202,10 @@ int main()
     anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
     anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
     anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
+    anim_player_swing.frames[3] = make_sprite("assets/player/playerswing2.png");
+    anim_player_swing.frames[4] = make_sprite("assets/player/playerswing2.png");
 
-    for(int i = 3; i < 4; i++)
-    {
-        anim_player_swing.frames[i] = make_sprite("assets/player/playerswing2.png");
-    }
-
-    anim_player_swing.frame_count = 4;
+    anim_player_swing.frame_count = 5;
     anim_player_swing.frame_rate = 0.1;
 
     anim_player_stab.frames[0] = make_sprite("assets/player/playerattack0.png");
