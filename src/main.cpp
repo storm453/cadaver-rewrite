@@ -130,6 +130,8 @@ float perlin2d(float x, float y, float freq, int depth)
 
 int main()
 {
+    float previous_time = 0;
+
     init_window(&game.window);
 
     if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) 
@@ -201,12 +203,12 @@ int main()
     anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
     anim_player_swing.frames[2] = make_sprite("assets/player/playerswing2.png");
 
-    for(int i = 3; i < 5; i++)
+    for(int i = 3; i < 4; i++)
     {
         anim_player_swing.frames[i] = make_sprite("assets/player/playerswing2.png");
     }
 
-    anim_player_swing.frame_count = 5;
+    anim_player_swing.frame_count = 4;
     anim_player_swing.frame_rate = 0.1;
 
     anim_player_stab.frames[0] = make_sprite("assets/player/playerattack0.png");
@@ -436,7 +438,7 @@ int main()
             glm::mat4 model = glm::mat4(1.0f);
 
             model = glm::translate(model, glm::vec3(entity->position.x, entity->position.y, 0.0f));
-            model = glm::scale(model, glm::vec3(entity_scale.x, entity_scale.y, 1.0));
+            model = glm::scale(model, glm::vec3(entity_scale.x * scale, entity_scale.y, 1.0));
 
             afx::setConstant(program, "model", model);
             afx::setConstant(program, "view", view);
@@ -449,6 +451,12 @@ int main()
 
         unsigned int end_time = SDL_GetTicks();
 
+        float current_time = SDL_GetTicks();
+
+        game.delta_time = (current_time - previous_time) / 1000.0f;
+
+        previous_time = current_time;
+
         std::uint64_t profile_end = SDL_GetPerformanceCounter();
 
         std::uint64_t profile_diff = profile_end - profile_start;
@@ -458,13 +466,13 @@ int main()
             float target_x = game.player->position.x;
             float target_y = game.player->position.y;
 
-            camera.pos.x = lerp(camera.pos.x, target_x, 0.05);
-            camera.pos.y = lerp(camera.pos.y, target_y, 0.05);
+            camera.pos.x = lerp(camera.pos.x, target_x, 0.02);
+            camera.pos.y = lerp(camera.pos.y, target_y, 0.02);
         }
 
         //game.delta_time = (end_time - start_time) / 1000.0f;
 
-        game.delta_time = profile_diff / ((float) SDL_GetPerformanceFrequency());
+        //game.delta_time = profile_diff / ((float) SDL_GetPerformanceFrequency());
 
         SDL_GL_SwapWindow(game.window.window);
 

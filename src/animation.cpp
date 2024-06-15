@@ -57,13 +57,13 @@ Sprite* step_animation(Animation* animation, float time_step)
 
 void switch_animation(Entity* entity, Animation* new_animation)
 {
-    if(&entity->animation != new_animation)
-    {
-        float old_playback_time = entity->animation.playback_time;
+    float old_playback_time = entity->animation.playback_time;
 
-        entity->animation = *new_animation;
-        entity->animation.playback_time = old_playback_time;
-    }
+    entity->animation = *new_animation;
+    entity->animation.playback_time = old_playback_time;
+
+    //make sure its not marked as dirty
+    entity->animation.dirty = false;
 }
 
 std::string char_to_string(const char* data)

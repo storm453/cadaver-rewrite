@@ -40,11 +40,11 @@ void player_movement(Entity* entity, float speed)
     target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
     target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
     
-    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 500 * game.delta_time;
-    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 500 * game.delta_time;
+    entity->velocity.x += (target_velocity.x - entity->velocity.x) * 100 * game.delta_time;
+    entity->velocity.y += (target_velocity.y - entity->velocity.y) * 100 * game.delta_time;
 
-    entity->position.x += target_velocity.x * 10 * game.delta_time; //entity->velocity.x * game.delta_time;
-    entity->position.y += target_velocity.y * 10  * game.delta_time; //entity->velocity.y * game.delta_time;
+    entity->position.x += entity->velocity.x * game.delta_time;
+    entity->position.y += entity->velocity.y * game.delta_time;
 }
 
 void player_attack(Entity* entity)
@@ -53,8 +53,19 @@ void player_attack(Entity* entity)
     {
         game.window.input.mouse_down = false;
 
+        entity->player.swings++;
+
+        if(entity->player.swings >= 3)
+        {
+            entity->player.state = PlayerState::stab;
+            entity->player.swings = 0;
+        }
+        else
+        {
+            entity->player.state = PlayerState::swing;
+        }
+
         entity->animation.playback_time = 0;
-        entity->player.state = PlayerState::swing;
     }
 }
 
@@ -111,8 +122,6 @@ void entity_update(Entity* entity)
                 } break;
 
                 case(PlayerState::swing): {
-                    
-
                     if(entity->animation.dirty)
                     {
                         entity->animation.dirty = false;
@@ -123,12 +132,10 @@ void entity_update(Entity* entity)
                 } break;
 
                 case(PlayerState::stab): {
-                    player_movement(entity, 300);
-
-                    if(entity->animation.dirty)
+                   if(entity->animation.dirty)
                     {
-                        // entity->animation.dirty = false;
-                        // entity->player.state = PlayerState::idle;
+                        entity->animation.dirty = false;
+                        entity->player.state = PlayerState::idle;
                     }
 
                     switch_animation(entity, entity->player.stab_animation);
