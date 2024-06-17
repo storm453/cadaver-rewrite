@@ -31,8 +31,15 @@ Entity make_entity(V2 position, unsigned int flags)
 
 void player_movement(Entity* entity, float speed)
 {
-    entity->character.target_velocity.x = (game.window.input.d - game.window.input.a) * speed;
-    entity->character.target_velocity.y = (game.window.input.s - game.window.input.w) * speed;
+    V2 input;
+
+    input.x = (game.window.input.d - game.window.input.a);
+    input.y = (game.window.input.s - game.window.input.w);
+
+    entity->character.target_velocity.x = input.x* speed;
+    entity->character.target_velocity.y = input.y* speed;
+
+    entity->player.last_direction = entity->character.target_velocity;
 }
 
 void player_attack(Entity* entity)
@@ -67,8 +74,7 @@ void entity_update(Entity* entity)
         entity->character.velocity.x += (entity->character.target_velocity.x - entity->character.velocity.x) * ACCEL * game.delta_time;
         entity->character.velocity.y += (entity->character.target_velocity.y - entity->character.velocity.y) * ACCEL * game.delta_time;
 
-        entity->position.x += entity->character.velocity.x * game.delta_time;
-        entity->position.y += entity->character.velocity.y * game.delta_time;
+        entity->position = entity->position + entity->character.velocity * V2 {game.delta_time, game.delta_time};
     }
 
     if(entity->flags & FLAG_PLAYER)
@@ -129,9 +135,9 @@ void entity_update(Entity* entity)
                     entity->player.state = PlayerState::idle;
                 }
             } break;
-
+ 
             case(PlayerState::stab): {
-                entity->character.target_velocity = {0, 0};
+                entity->character.target_velocity = {entity->player.last_direction.x * 8, entity->player.last_direction.y * 8};
                 switch_animation(entity, entity->player.stab_animation);
 
                 //check if the animation is done
@@ -149,7 +155,7 @@ void entity_update(Entity* entity)
 
         if(game.player != NULL) 
         {
-            V2 move = normalize(sub(game.player->position, entity->position));
+            V2 move = normalize(game.player->position - entity->position);
 
             entity->character.target_velocity.x = move.x * chase_speed;
             entity->character.target_velocity.y = move.y * chase_speed;

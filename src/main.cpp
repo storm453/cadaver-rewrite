@@ -153,7 +153,7 @@ int main()
 
         *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER);
 
-        entity->animation = make_animation_txt("player_walk.txt");
+        //entity->animation = make_animation_txt("player_walk.txt");
         entity->animation.frame_rate = 0.15;
     }
 
@@ -191,6 +191,9 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
+
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
 
@@ -206,9 +209,44 @@ int main()
     Animation anim_player_swing;
     Animation anim_player_stab;
 
-    anim_player_idle = make_animation_txt("player_idle.txt");
-    anim_player_run = make_animation_txt("player_run.txt");
-    anim_player_walk = make_animation_txt("player_walk.txt");
+    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle0.png");
+    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle1.png");
+    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle2.png");
+    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle3.png");
+    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle4.png");
+    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle5.png");
+    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle6.png");
+    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle7.png");
+    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle8.png");
+    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle9.png");
+
+    anim_player_idle.frame_count = 10;
+    anim_player_idle.frame_rate = 0.1;
+
+    anim_player_walk.frames[0] = make_sprite("assets/player/playerwalk0.png");
+    anim_player_walk.frames[1] = make_sprite("assets/player/playerwalk1.png");
+    anim_player_walk.frames[2] = make_sprite("assets/player/playerwalk2.png");
+    anim_player_walk.frames[3] = make_sprite("assets/player/playerwalk3.png");
+    anim_player_walk.frames[4] = make_sprite("assets/player/playerwalk4.png");
+    anim_player_walk.frames[5] = make_sprite("assets/player/playerwalk5.png");
+    anim_player_walk.frames[6] = make_sprite("assets/player/playerwalk6.png");
+    anim_player_walk.frames[7] = make_sprite("assets/player/playerwalk7.png");
+
+    anim_player_walk.frame_count = 8;
+    anim_player_walk.frame_rate = 0.1;
+
+    anim_player_run.frames[0] = make_sprite("assets/player/playerrun0.png");
+    anim_player_run.frames[1] = make_sprite("assets/player/playerrun1.png");
+    anim_player_run.frames[2] = make_sprite("assets/player/playerrun2.png");
+    anim_player_run.frames[3] = make_sprite("assets/player/playerrun3.png");
+    anim_player_run.frames[4] = make_sprite("assets/player/playerrun4.png");
+    anim_player_run.frames[5] = make_sprite("assets/player/playerrun5.png");
+    anim_player_run.frames[6] = make_sprite("assets/player/playerrun6.png");
+    anim_player_run.frames[7] = make_sprite("assets/player/playerrun7.png");
+    anim_player_run.frames[8] = make_sprite("assets/player/playerrun8.png");
+
+    anim_player_run.frame_count = 9;
+    anim_player_run.frame_rate = 0.1;
 
     anim_player_swing.frames[0] = make_sprite("assets/player/playerswing0.png");
     anim_player_swing.frames[1] = make_sprite("assets/player/playerswing1.png");
@@ -244,10 +282,6 @@ int main()
     
     while(game.window.running)
     {
-        unsigned int start_time = SDL_GetTicks();
-
-        std::uint64_t profile_start = SDL_GetPerformanceCounter();
-
         update_window(&game.window);
 
         glClearColor(0.81f, 0.75f, 0.8f, 1.0f);
@@ -293,9 +327,7 @@ int main()
                                 float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
                                 float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
                                                                                         
-                                //float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
-
-                                float tile_noise = 0.5;
+                                float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
 
                                 TileType tile;
 
@@ -326,11 +358,7 @@ int main()
                             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
                             
                             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);                   
-                    }
-                    }
-                    else
-                    {
-                        //DO THIS LALREADY BRUH
+                        }
                     }
                 }
             }
@@ -352,7 +380,7 @@ int main()
         {
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { (current_chunk->index.x * chunk_size * 2), (current_chunk->index.y * chunk_size * 2) };
+            V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
@@ -368,12 +396,9 @@ int main()
             
             glActiveTexture(GL_TEXTURE0);
 
-            glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
-
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(chunk_size, chunk_size, 0.0f));
+            model = glm::scale(model, glm::vec3(chunk_size / 2, chunk_size / 2, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
 
             afx::setConstant(chunk_program, "model", model);
@@ -381,7 +406,7 @@ int main()
             afx::setConstant(chunk_program, "projection", projection);
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
-         }
+        }
 
         glUseProgram(program);
 
@@ -413,10 +438,13 @@ int main()
             {
                 Sprite* current_frame = step_animation(&entity->animation, game.delta_time);
 
-                entity_scale.x = current_frame->width;
-                entity_scale.y = current_frame->height;
+                if(current_frame != NULL)
+                {
+                    entity_scale.x = current_frame->width;
+                    entity_scale.y = current_frame->height;
 
-                glBindTexture(GL_TEXTURE_2D, current_frame->texture);
+                    glBindTexture(GL_TEXTURE_2D, current_frame->texture);
+                }
             }
             else
             {
@@ -430,9 +458,6 @@ int main()
 
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
             int scale = 1;
 
@@ -455,18 +480,12 @@ int main()
             glBlendFunc(GL_ONE, GL_ZERO);
         }
 
-        unsigned int end_time = SDL_GetTicks();
-
         float current_time = SDL_GetTicks();
 
         game.delta_time = (current_time - previous_time) / 1000.0f;
 
         previous_time = current_time;
-
-        std::uint64_t profile_end = SDL_GetPerformanceCounter();
-
-        std::uint64_t profile_diff = profile_end - profile_start;
-
+        
         if(game.player != NULL) 
         {
             float target_x = game.player->position.x;
@@ -476,15 +495,7 @@ int main()
             camera.pos.y = lerp(camera.pos.y, target_y, 0.02);
         }
 
-        //game.delta_time = (end_time - start_time) / 1000.0f;
-
-        //game.delta_time = profile_diff / ((float) SDL_GetPerformanceFrequency());
-
         SDL_GL_SwapWindow(game.window.window);
-
-        float fps = 1000 / game.delta_time;
-
-        //std::cout << game.delta_time << " DT" << "\n";
     }
     
     SDL_GL_DeleteContext(game.window.context);

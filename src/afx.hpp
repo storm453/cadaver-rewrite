@@ -8,8 +8,10 @@
 
 namespace afx 
 {
+    typedef unsigned int VBO;
+
     glm::mat4 camera_view_matrix(const Camera* my_camera)
-    {  
+    {
         return glm::translate(glm::mat4(1.0f), glm::vec3(-my_camera->pos.x, -my_camera->pos.y, -100.0f));
     }
 

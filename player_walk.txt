@@ -1,4 +1,0 @@
-assets/player/playerwalk
-.png
-8
-0.1

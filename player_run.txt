@@ -1,4 +1,0 @@
-assets/player/playerrun
-.png
-9
-0.1

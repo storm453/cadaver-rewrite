@@ -7,7 +7,7 @@
 constexpr int tile_size = 16;
 constexpr int chunk_tiles = 16;
 constexpr int chunk_size =  tile_size * chunk_tiles;
-constexpr int chunk_load = 1;
+constexpr int chunk_load = 4;
 
 enum TileType
 {

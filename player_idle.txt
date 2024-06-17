@@ -1,4 +1,0 @@
-assets/player/playeridle
-.png
-9
-0.1

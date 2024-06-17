@@ -1,4 +1,0 @@
-assets/player/playerswing
-.png
-3
-0.1

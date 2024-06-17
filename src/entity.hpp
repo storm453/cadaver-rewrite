@@ -39,6 +39,7 @@ struct Entity
     {
         float hp;
         int swings = 0;
+        V2 last_direction;
         PlayerState state = PlayerState::idle;
         Animation* idle_animation;
         Animation* walk_animation;
