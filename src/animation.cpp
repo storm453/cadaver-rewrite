@@ -41,7 +41,7 @@ Sprite* step_animation(Animation* animation, float time_step)
 
     int current_frame = (int)(animation->playback_time / animation->frame_rate);
     
-    if(current_frame == animation->frame_count)
+    if(current_frame >= animation->frame_count)
     {
         if(animation->playback_time != 0)
         {

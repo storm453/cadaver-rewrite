@@ -35,6 +35,7 @@ struct Entity
     bool render = true;
     bool animation_enabled = true;
     Animation animation;
+    Sprite sprite;
     struct 
     {
         float hp;

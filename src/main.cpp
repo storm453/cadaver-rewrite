@@ -139,6 +139,23 @@ int main()
         throw(std::string("Failed to initialize GLAD"));
     }
 
+    //animations
+    Animation anim_player_idle;
+
+    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle0.png");
+    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle1.png");
+    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle2.png");
+    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle3.png");
+    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle4.png");
+    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle5.png");
+    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle6.png");
+    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle7.png");
+    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle8.png");
+    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle9.png");
+
+    anim_player_idle.frame_count = 10;
+    anim_player_idle.frame_rate = 0.1;
+
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
@@ -153,8 +170,7 @@ int main()
 
         *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER);
 
-        //entity->animation = make_animation_txt("player_walk.txt");
-        entity->animation.frame_rate = 0.15;
+        entity->animation = anim_player_idle;
     }
 
     unsigned int program = afx::shaderProgram(vertex_shader_source, fragment_shader_source);
@@ -202,26 +218,12 @@ int main()
 
     Sprite tiles_sheet = make_sprite("chunk_textures.png");
     Sprite magma_sprite = make_sprite("magma.png");
+    Sprite player_sprite = make_sprite("player.png");
 
-    Animation anim_player_idle;
     Animation anim_player_run;
     Animation anim_player_walk;
     Animation anim_player_swing;
     Animation anim_player_stab;
-
-    anim_player_idle.frames[0] = make_sprite("assets/player/playeridle0.png");
-    anim_player_idle.frames[1] = make_sprite("assets/player/playeridle1.png");
-    anim_player_idle.frames[2] = make_sprite("assets/player/playeridle2.png");
-    anim_player_idle.frames[3] = make_sprite("assets/player/playeridle3.png");
-    anim_player_idle.frames[4] = make_sprite("assets/player/playeridle4.png");
-    anim_player_idle.frames[5] = make_sprite("assets/player/playeridle5.png");
-    anim_player_idle.frames[6] = make_sprite("assets/player/playeridle6.png");
-    anim_player_idle.frames[7] = make_sprite("assets/player/playeridle7.png");
-    anim_player_idle.frames[8] = make_sprite("assets/player/playeridle8.png");
-    anim_player_idle.frames[9] = make_sprite("assets/player/playeridle9.png");
-
-    anim_player_idle.frame_count = 10;
-    anim_player_idle.frame_rate = 0.1;
 
     anim_player_walk.frames[0] = make_sprite("assets/player/playerwalk0.png");
     anim_player_walk.frames[1] = make_sprite("assets/player/playerwalk1.png");
@@ -280,6 +282,8 @@ int main()
         game.player->player.swing_animation = &anim_player_swing;
     }
     
+    previous_time = SDL_GetTicks();
+
     while(game.window.running)
     {
         update_window(&game.window);
@@ -448,7 +452,7 @@ int main()
             }
             else
             {
-                Sprite* frame = &entity->animation.frames[0];
+                Sprite* frame = &entity->sprite;
 
                 entity_scale.x = frame->width;
                 entity_scale.y = frame->height;

@@ -19,8 +19,8 @@ V2 normalize(V2 vector)
 
     V2 temp;
     
-    temp.x = temp.x / hyp;
-    temp.y = temp.y / hyp;
+    temp.x = vector.x / hyp;
+    temp.y = vector.y / hyp;
 
     return temp;
 }

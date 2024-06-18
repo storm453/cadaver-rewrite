@@ -1,1 +1,1 @@
-clang++ src/*.cpp -o tynebourne -std=c++11 -framework OpenGL -L/opt/homebrew/lib -I/opt/homebrew/include/SDL2 -lSDL2 -Iinclude -Wno-gnu-designator -g
+clang++ src/*.cpp -o tynebourne -std=c++11 -framework OpenGL -L/opt/homebrew/lib -I/opt/homebrew/include/SDL2 -lSDL2 -Iinclude -Wno-gnu-designator -DSDL_MAIN_HANDLED -DSTB_IMAGE_IMPLEMENTATION -g
