@@ -44,6 +44,14 @@ static const char* fragment_shader_source =
     "    finalColor = texture(ourTexture, vec2(TexCoord.x, TexCoord.y));\n"
     "}\n";
 
+static const char* fragment_shader_source_flat =
+    "#version 330 core\n"
+    "out vec4 finalColor;\n"
+    "uniform vec4 our_color;\n"
+    "void main() {\n"
+    "    finalColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "}\n";
+
 static const char* lmars_fragment_source =
     "#version 330 core\n"
     "in vec2 TexCoord;\n"
@@ -156,6 +164,7 @@ int main()
 
     unsigned int program = afx::shaderProgram(vertex_shader_source, fragment_shader_source);
     unsigned int chunk_program = afx::shaderProgram(vertex_shader_source, lmars_fragment_source);
+    unsigned int draw_program = afx::shaderProgram(vertex_shader_source, fragment_shader_source_flat);
     
     unsigned int vao;
     
@@ -414,6 +423,13 @@ int main()
 
             glBlendFunc(GL_ONE, GL_ZERO);
         }
+
+        //test
+        afx::drawRectangle(draw_program, view, projection, 5, 5);
+
+        afx::drawRectangle(draw_program, view, projection, 50, 5);
+
+        afx::drawRectangle(draw_program, view, projection, 5, 50);
 
         float current_time = SDL_GetTicks();
 

@@ -21,6 +21,22 @@ namespace afx
         glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(data));
     }
 
+    void drawRectangle(unsigned int program, glm::mat4 view, glm::mat4 projection, float x, float y)
+    {
+        glUseProgram(program);
+
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::translate(model, glm::vec3(x, y, 0.0f));
+        model = glm::scale(model, glm::vec3(10, 10, 1.0));
+
+        afx::setConstant(program, "model", model);
+        afx::setConstant(program, "view", view);
+        afx::setConstant(program, "projection", projection);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+    }
+
     unsigned int shaderProgram(const char *vertex_shader_source, const char *fragment_shader_source) 
     {
         unsigned int program, vertex_shader, fragment_shader;
