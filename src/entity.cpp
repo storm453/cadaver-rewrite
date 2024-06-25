@@ -157,8 +157,7 @@ void entity_update(Entity* entity)
         {
             V2 move = normalize(game.player->position - entity->position);
 
-            entity->character.target_velocity.x = move.x * chase_speed;
-            entity->character.target_velocity.y = move.y * chase_speed;
+            entity->character.target_velocity = move * V2X(chase_speed);
         }
     }
 }

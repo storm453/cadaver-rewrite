@@ -69,6 +69,11 @@ float perlin2d(float x, float y, float freq, int depth)
     return fin/div;
 }
 
+V2 V2X(float x)
+{
+    return V2{x, x};
+}
+
 float lerp(float a, float b, float t)
 {
     return a * (1 - t) + b * t;

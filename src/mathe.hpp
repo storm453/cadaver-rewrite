@@ -16,6 +16,7 @@ float smooth_inter(float x, float y, float s);
 float noise2d(float x, float y);
 float perlin2d(float x, float y, float freq, int depth);
 
+V2 V2X(float x);
 float lerp(float a, float b, float t);
 float length(V2 vector);
 V2 normalize(V2 vector);
