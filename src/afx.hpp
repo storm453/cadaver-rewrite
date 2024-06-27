@@ -37,17 +37,18 @@ namespace afx
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
     }
     
-    void drawUI(unsigned int program, glm::mat4 projection, float x, float y)
+    void drawUI(unsigned int program, float x, float y, float zoom)
     {
         glUseProgram(program);
 
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 projection = glm::mat4(1.0f);
 
-        view = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -100.0f));
-
-        model = glm::translate(model, glm::vec3(x, y, 0.0f));
+        view = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, -100.0f));
         model = glm::scale(model, glm::vec3(10, 10, 1.0));
+        projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
+        //projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
 
         afx::setConstant(program, "model", model);
         afx::setConstant(program, "view", view);

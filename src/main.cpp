@@ -431,7 +431,7 @@ int main()
 
         afx::drawRectangle(draw_program, view, projection, 5, 50);
 
-        afx::drawUI(draw_program, projection, -280, 180);
+        afx::drawUI(draw_program, 160, 1, camera.zoom);
 
         float current_time = SDL_GetTicks();
 
