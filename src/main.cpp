@@ -431,6 +431,8 @@ int main()
 
         afx::drawRectangle(draw_program, view, projection, 5, 50);
 
+        afx::drawUI(draw_program, projection, -280, 180);
+
         float current_time = SDL_GetTicks();
 
         game.delta_time = (current_time - previous_time) / 1000.0f;
