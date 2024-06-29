@@ -400,36 +400,16 @@ int main()
                 glBindTexture(GL_TEXTURE_2D, frame->texture);
             }
 
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-            int scale = 1;
-
-            if(entity->character.velocity.x < 0)
-            {
-              scale = -1;
-            }
-            
-            glm::mat4 model = glm::mat4(1.0f);
-
-            model = glm::translate(model, glm::vec3(entity->position.x, entity->position.y, 0.0f));
-            model = glm::scale(model, glm::vec3(entity_scale.x * scale, entity_scale.y, 1.0));
-
-            afx::setConstant(program, "model", model);
-            afx::setConstant(program, "view", view);
-            afx::setConstant(program, "projection", projection);
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
-
-            glBlendFunc(GL_ONE, GL_ZERO);
+            afx::drawEntity(program, entity, &entity_scale, view, projection);
         }
 
         //test
-        // afx::drawRectangle(draw_program, view, projection, 5, 5);
+        glUseProgram(draw_program);
+        afx::drawRectangle(draw_program, view, projection, 5, 5);
 
-        // afx::drawRectangle(draw_program, view, projection, 50, 5);
+        afx::drawRectangle(draw_program, view, projection, 50, 5);
 
-        // afx::drawRectangle(draw_program, view, projection, 5, 50);
+        afx::drawRectangle(draw_program, view, projection, 5, 50);
 
         afx::drawUI(draw_program, -580, 300);
         afx::drawUI(draw_program, -470, 300);

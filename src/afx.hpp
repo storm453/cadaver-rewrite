@@ -23,8 +23,6 @@ namespace afx
 
     void drawRectangle(unsigned int program, glm::mat4 view, glm::mat4 projection, float x, float y)
     {
-        glUseProgram(program);
-
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, glm::vec3(x, y, 0.0f));
@@ -39,8 +37,6 @@ namespace afx
     
     void drawUI(unsigned int program, float x, float y)
     {
-        glUseProgram(program);
-
         glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
@@ -59,6 +55,32 @@ namespace afx
         afx::setConstant(program, "projection", projection);
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+    }
+
+    void drawEntity(unsigned int program, Entity* entity, V2* entity_scale, glm::mat4 view, glm::mat4 projection)
+    {
+        int scale = 1;
+
+        if(entity->character.velocity.x < 0)
+        {
+            scale = -1;
+        }
+        
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::translate(model, glm::vec3(entity->position.x, entity->position.y, 0.0f));
+        model = glm::scale(model, glm::vec3(entity_scale->x * scale, entity_scale->y, 1.0));
+
+        afx::setConstant(program, "model", model);
+        afx::setConstant(program, "view", view);
+        afx::setConstant(program, "projection", projection);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+
+        glBlendFunc(GL_ONE, GL_ZERO);
     }
 
     unsigned int shaderProgram(const char *vertex_shader_source, const char *fragment_shader_source) 
