@@ -342,7 +342,7 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(chunk_size / 2, chunk_size / 2, 0.0f));
+            model = glm::scale(model, glm::vec3(128, 128, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
 
             afx::setConstant(chunk_program, "model", model);
@@ -425,11 +425,11 @@ int main()
         }
 
         //test
-        afx::drawRectangle(draw_program, view, projection, 5, 5);
+        // afx::drawRectangle(draw_program, view, projection, 5, 5);
 
-        afx::drawRectangle(draw_program, view, projection, 50, 5);
+        // afx::drawRectangle(draw_program, view, projection, 50, 5);
 
-        afx::drawRectangle(draw_program, view, projection, 5, 50);
+        // afx::drawRectangle(draw_program, view, projection, 5, 50);
 
         afx::drawUI(draw_program, -580, 300);
         afx::drawUI(draw_program, -470, 300);

@@ -36,8 +36,10 @@ void player_movement(Entity* entity, float speed)
     input.x = (game.window.input.d - game.window.input.a);
     input.y = (game.window.input.s - game.window.input.w);
 
-    entity->character.target_velocity.x = input.x* speed;
-    entity->character.target_velocity.y = input.y* speed;
+    input = normalize(input);
+
+    entity->character.target_velocity.x = input.x * speed;
+    entity->character.target_velocity.y = input.y * speed;
 
     entity->player.last_direction = entity->character.target_velocity;
 }
