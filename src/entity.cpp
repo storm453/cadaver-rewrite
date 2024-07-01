@@ -36,12 +36,19 @@ void player_movement(Entity* entity, float speed)
     input.x = (game.window.input.d - game.window.input.a);
     input.y = (game.window.input.s - game.window.input.w);
 
+    if(input.x != 0)
+    {
+        entity->player.last_direction.x = input.x;
+    }
+    if(input.y != 0)
+    {
+        entity->player.last_direction.y = input.y;
+    }
+
     input = normalize(input);
 
     entity->character.target_velocity.x = input.x * speed;
     entity->character.target_velocity.y = input.y * speed;
-
-    entity->player.last_direction = entity->character.target_velocity;
 }
 
 void player_attack(Entity* entity)
@@ -139,7 +146,9 @@ void entity_update(Entity* entity)
             } break;
  
             case(PlayerState::stab): {
-                entity->character.target_velocity = {entity->player.last_direction.x * 8, entity->player.last_direction.y * 8};
+                int DASH_STRENGTH = 150;
+
+                entity->character.target_velocity = {entity->player.last_direction.x * DASH_STRENGTH, entity->player.last_direction.y * DASH_STRENGTH};
                 switch_animation(entity, entity->player.stab_animation);
 
                 //check if the animation is done

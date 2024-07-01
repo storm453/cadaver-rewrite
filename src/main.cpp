@@ -405,10 +405,9 @@ int main()
 
         //test
         glUseProgram(draw_program);
+
         afx::drawRectangle(draw_program, view, projection, 5, 5);
-
         afx::drawRectangle(draw_program, view, projection, 50, 5);
-
         afx::drawRectangle(draw_program, view, projection, 5, 50);
 
         afx::drawUI(draw_program, -580, 300);
