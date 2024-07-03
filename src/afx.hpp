@@ -1,5 +1,7 @@
 #pragma once
 
+#include "main.hpp"
+
 #include <cstdint>
 #include <stdio.h>
 
@@ -46,9 +48,6 @@ namespace afx
         model = glm::scale(model, glm::vec3(50, 50, 1.0));
         
         projection = glm::ortho(-640.0, 640.0, -360.0, 360.0, 0.1, 100.0);
-        //projection = glm::ortho(-128.0, 128.0, -90.0, 90.0);
-        //projection = glm::perspective(glm::radians(90.0f), game.window.width / game.window.height, 0.1f, 100.0f);
-        //projection = glm::scale(projection, glm::vec3(1.0f, -1.0f, 1.0f));
 
         afx::setConstant(program, "model", model);
         afx::setConstant(program, "view", view);
