@@ -70,32 +70,6 @@ Chunk chunks_array[999];
 
 int main()
 {
-    float translation_matrix[16] =
-    {
-        1, 0, 0, 0, //x
-        0, 1, 0, 0, //y
-        0, 0, 1, 0, //z
-        0, 0, 1, 1, //w
-    };
-
-    //move x, y, and z
-    float translate(float matrix[16], float x, float y, float z)
-    {
-        matrix[4] = x;
-        matrix[8] = y;
-        matrix[12] = z;
-
-        float move_x = matrix[0] * 1 + matrix[4] * matrix[16];
-        float move_y = matrix[5] * 1 + matrix[8] * matrix[16];
-        float move_y = matrix[10] * 1 + matrix[12] * matrix[16];
-
-        return
-    }
-
-    translation_matrix = translate(translation_matrix, 5, 3, 8);
-
-
-
     float previous_time = 0;
 
     init_window(&game.window);

@@ -100,7 +100,7 @@ void entity_update(Entity* entity)
                 }
 
                 switch_animation(entity, entity->player.idle_animation);
-            } break; 
+            } break;
 
             case(PlayerState::walk): {
                 player_movement(entity, player_walk_speed);
