@@ -47,9 +47,9 @@ static const char* fragment_shader_source =
 static const char* fragment_shader_source_flat =
     "#version 330 core\n"
     "out vec4 finalColor;\n"
-    "uniform vec4 our_color;\n"
+    "uniform vec3 our_color;\n"
     "void main() {\n"
-    "    finalColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);\n"
+    "    finalColor = vec4(1.0, 0.0, 0.0, 1.0f);\n"
     "}\n";
 
 static const char* lmars_fragment_source =
@@ -148,7 +148,7 @@ int main()
     //make the player entity
     Entity* entity = &game.entities[find_free_entity()];
 
-    *entity = make_entity(V2{ 0, 0 }, FLAG_PLAYER | FLAG_CHARACTER);
+    *entity = make_entity(V2{ 0, 0 }, FLAG_PLAYER | FLAG_CHARACTER | FLAG_LIFE);
 
     game.player = entity;
 
@@ -157,7 +157,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER);
+        *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER | FLAG_LIFE);
 
         entity->animation = anim_player_walk;
     }
@@ -400,18 +400,27 @@ int main()
                 glBindTexture(GL_TEXTURE_2D, frame->texture);
             }
 
+            glUseProgram(program);
             afx::drawEntity(program, entity, &entity_scale, view, projection);
+
+            if(entity->flags & FLAG_LIFE)
+            {
+                glUseProgram(draw_program);
+                afx::drawRectangle(draw_program, view, projection, entity->position.x, entity->position.y - 48, (game.player->life.hp / 100) * 30, 5);
+            }
+
+            if(entity->life.hp > 0) entity->life.hp -= 5 * game.delta_time;
         }
 
         //test
         glUseProgram(draw_program);
 
-        afx::drawRectangle(draw_program, view, projection, 5, 5);
-        afx::drawRectangle(draw_program, view, projection, 50, 5);
-        afx::drawRectangle(draw_program, view, projection, 5, 50);
+        // afx::drawRectangle(draw_program, view, projection, 5, 5);
+        // afx::drawRectangle(draw_program, view, projection, 50, 5);
+        // afx::drawRectangle(draw_program, view, projection, 5, 50);
 
-        afx::drawUI(draw_program, -580, 300);
-        afx::drawUI(draw_program, -470, 300);
+        // afx::drawUI(draw_program, -580, 300);
+        // afx::drawUI(draw_program, -470, 300);
 
         float current_time = SDL_GetTicks();
 

@@ -16,7 +16,8 @@ enum EntityFlags
     FLAG_NONE      = 0,
     FLAG_CHARACTER = 0x01,
     FLAG_PLAYER    = 0x02,
-    FLAG_ENEMY     = 0x04
+    FLAG_ENEMY     = 0x04,
+    FLAG_LIFE      = 0x08
 };
 
 enum struct PlayerState
@@ -38,7 +39,6 @@ struct Entity
     Sprite sprite;
     struct 
     {
-        float hp;
         int swings = 0;
         V2 last_direction;
         PlayerState state = PlayerState::idle;
@@ -57,6 +57,10 @@ struct Entity
     {
         PlayerState state;
     } enemy;
+    struct
+    {
+        float hp = 100;
+    } life;
 };
 
 constexpr float player_walk_speed = 100.0f;
