@@ -29,6 +29,12 @@ enum struct PlayerState
     stab
 };
 
+enum struct EnemyState
+{
+    idle,
+    chase
+};
+
 struct Entity
 {
     V2 position = {0, 0};
@@ -55,7 +61,7 @@ struct Entity
     } character;
     struct
     {
-        PlayerState state;
+        EnemyState state = EnemyState::idle;
     } enemy;
     struct
     {

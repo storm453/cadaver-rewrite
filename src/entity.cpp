@@ -162,13 +162,48 @@ void entity_update(Entity* entity)
 
     if(entity->flags & FLAG_ENEMY)
     {
-        float chase_speed = 80;
+        float player_distance = 999;
 
-        if(game.player != NULL) 
+        if(game.player != NULL)
         {
-            V2 move = normalize(game.player->position - entity->position);
+            player_distance = length(entity->position - game.player->position);
+        }
 
-            entity->character.target_velocity = move * V2X(chase_speed);
+        switch(entity->enemy.state)
+        {
+            case(EnemyState::idle): {
+                entity->character.target_velocity = V2{0,0};
+
+                if(player_distance <= 50)
+                {
+                    entity->enemy.state = EnemyState::chase;
+                }
+            } break;
+
+            case(EnemyState::chase): {
+                float chase_speed = 80;
+
+                if(game.player != NULL) 
+                {
+                    V2 move = normalize(game.player->position - entity->position);
+
+                    entity->character.target_velocity = move * V2X(chase_speed);
+                }
+
+                if(player_distance >= 500)
+                {
+                    entity->enemy.state = EnemyState::idle;
+                }
+            } break;
+        }
+    }
+
+    if(entity->flags & FLAG_LIFE)
+    {
+        if(entity->life.hp <= 10)
+        {
+            //delete the entity
+            entity = 0;
         }
     }
 }

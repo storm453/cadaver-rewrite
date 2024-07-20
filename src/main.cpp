@@ -157,7 +157,7 @@ int main()
     {
         Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(V2{ 5, 0 }, FLAG_ENEMY | FLAG_CHARACTER | FLAG_LIFE);
+        *entity = make_entity(V2{ 100, 0 }, FLAG_ENEMY | FLAG_CHARACTER | FLAG_LIFE);
 
         entity->animation = anim_player_walk;
     }
