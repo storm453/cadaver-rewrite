@@ -342,7 +342,7 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(64, 64, 0.0f));
+            model = glm::scale(model, glm::vec3(128, 128, 0.0f));
             model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
 
             afx::setConstant(chunk_program, "model", model);

@@ -1,0 +1,1 @@
+g++ src/*.cpp -o tynebourne.exe -Iinclude -Llib -lmingw32 -lSDL2main -lSDL2 -DSDL_MAIN_HANDLED -DSTB_IMAGE_IMPLEMENTATION
