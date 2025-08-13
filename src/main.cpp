@@ -186,16 +186,36 @@ int main()
         0, 2, 3,
     };
 
-    unsigned int entity_vbo, entity_ebo;
+    float chunk_vertices[] =
+    {
+        1.0, 1.0, 0.0,    1.0f, 1.0f,
+        0.0, 1.0, 0.0,    0.0f, 1.0f,
+        1.0, 0.0, 0.0,    0.0f, 0.0f,
+        0.0, 0.0, 0.0,    1.0f, 0.0f,
+    };
+
+    unsigned int chunk_indices[] =
+    {
+        0, 1, 2,
+        0, 2, 3,
+    };
+
+    unsigned int entity_vbo, entity_ebo, chunk_vbo, chunk_ebo;
 
     glGenBuffers(1, &entity_vbo);
     glGenBuffers(1, &entity_ebo);
+    glGenBuffers(1, &chunk_vbo);
+    glGenBuffers(1, &chunk_ebo);
 
     glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(entity_vertices), entity_vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(chunk_vertices), chunk_vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(entity_indices), entity_indices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(chunk_indices), chunk_indices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
@@ -322,12 +342,15 @@ int main()
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
+            glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
+
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
+            V2i chunk_physical = { (current_chunk->index.x * 256), (current_chunk->index.y * 256) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
-            int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture"); 
+            int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture");
 
             glUniform1i(sampler0_location, 0); 
             glUniform1i(sampler1_location, 1);
@@ -342,8 +365,7 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(128, 128, 0.0f));
-            model = glm::translate(model, glm::vec3(1.0f, 1.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(256, 256, 0.0f));
 
             afx::setConstant(chunk_program, "model", model);
             afx::setConstant(chunk_program, "view", view);
@@ -351,6 +373,9 @@ int main()
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
         }
+
+        glBindBuffer(GL_ARRAY_BUFFER, entity_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, entity_ebo);
 
         glUseProgram(program);
 
