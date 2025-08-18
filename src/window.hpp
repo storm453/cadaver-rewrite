@@ -13,8 +13,8 @@ struct Window
     float height = 720;
     struct
     {
-        float mouseX;
-        float mouseY;
+        int mouseX;
+        int mouseY;
         float mouse_down;
         int mouse_button;
         float wheel_value;

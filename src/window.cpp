@@ -48,8 +48,7 @@ void update_window(Window* window)
         }
         if(ev.type == SDL_MOUSEMOTION)
         {
-            window->input.mouseX = ev.motion.x;
-            window->input.mouseY = ev.motion.y;
+            SDL_GetMouseState(&window->input.mouseX, &window->input.mouseY);
         }
         if(ev.type == SDL_MOUSEWHEEL)
         {

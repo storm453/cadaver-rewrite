@@ -138,6 +138,17 @@ void entity_update(Entity* entity)
                 player_movement(entity, player_walk_speed / 2);
                 switch_animation(entity, entity->player.swing_animation);
 
+                int mouse_pos_x = (game.window.input.mouseX) - (game.window.width / 2);
+                int mouse_pos_y = (game.window.input.mouseY) - (game.window.height / 2);
+
+                float length = sqrtf(mouse_pos_x * mouse_pos_x + mouse_pos_y * mouse_pos_y);
+
+                float norm_x = mouse_pos_x / length;
+                float norm_y = mouse_pos_y / length;
+
+                entity->player.last_direction.x = norm_x;
+                entity->player.last_direction.y = norm_y;
+
                 //check if the animation is done
                 if(finished_animation(&entity->animation))
                 {
@@ -146,7 +157,7 @@ void entity_update(Entity* entity)
             } break;
  
             case(PlayerState::stab): {
-                int DASH_STRENGTH = 150;
+                int DASH_STRENGTH = 400;
 
                 entity->character.target_velocity = {entity->player.last_direction.x * DASH_STRENGTH, entity->player.last_direction.y * DASH_STRENGTH};
                 switch_animation(entity, entity->player.stab_animation);
