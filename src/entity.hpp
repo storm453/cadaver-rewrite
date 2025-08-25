@@ -2,14 +2,7 @@
 
 #include "mathe.hpp"
 #include "animation.hpp"
-
-enum struct EntityType
-{
-    NONE   = 0,
-    OBJECT,
-    PLAYER,
-    ENEMY
-};
+#include "chunk.hpp"
 
 enum EntityFlags
 {
@@ -43,6 +36,7 @@ struct Entity
     bool animation_enabled = true;
     Animation animation;
     Sprite sprite;
+    Chunk* owner;
     struct 
     {
         int swings = 0;

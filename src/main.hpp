@@ -19,7 +19,7 @@ struct Camera
 {
     glm::vec2 pos = { 0, 0 };
     glm::mat4 projection = glm::mat4(1.0f);
-    float zoom = 0.5;
+    float zoom = 0.8;
 };
 
 extern Game game;

@@ -4,6 +4,10 @@
 #include <iostream>
 #include <chrono>
 #include <stdint.h>
+#include <fstream>
+#include <random>
+
+#include <sys/stat.h>
 
 #include <SDL2/SDL.h>
 #include <glad/glad.h>
@@ -152,15 +156,14 @@ int main()
 
     game.player = entity;
 
-    //make some entities
-    for(int i = 0; i < 1; i++)
-    {
-        Entity* entity = &game.entities[find_free_entity()];
+    //make an entity
+    // {
+    //     Entity* entity = &game.entities[find_free_entity()];
 
-        *entity = make_entity(V2{ 100, 0 }, FLAG_ENEMY | FLAG_CHARACTER | FLAG_LIFE);
+    //     *entity = make_entity(V2{ 100, 0 }, FLAG_ENEMY | FLAG_CHARACTER | FLAG_LIFE);
 
-        entity->animation = anim_player_walk;
-    }
+    //     entity->animation = anim_player_walk;
+    // }
 
     unsigned int program = afx::shaderProgram(vertex_shader_source, fragment_shader_source);
     unsigned int chunk_program = afx::shaderProgram(vertex_shader_source, lmars_fragment_source);
@@ -174,10 +177,10 @@ int main()
     float entity_vertices[] =
     {
         //vertices          texCoords
-         1.0,  1.0, 0.0,    1.0f, 1.0f,
-        -1.0,  1.0, 0.0,    0.0f, 1.0f,
-        -1.0, -1.0, 0.0,    0.0f, 0.0f,
-         1.0, -1.0, 0.0,    1.0f, 0.0f,
+         0.5,  0.5, 0.0,    1.0f, 1.0f,
+        -0.5,  0.5, 0.0,    0.0f, 1.0f,
+        -0.5, -0.5, 0.0,    0.0f, 0.0f,
+         0.5, -0.5, 0.0,    1.0f, 0.0f,
     };
 
     unsigned int entity_indices[] =
@@ -227,8 +230,7 @@ int main()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
     Sprite tiles_sheet = make_sprite("chunk_textures.png");
-    Sprite magma_sprite = make_sprite("magma.png");
-    Sprite player_sprite = make_sprite("player.png");
+    Sprite sprite_tree = make_sprite("assets/tree2.png");
 
     if(game.player != NULL) 
     {
@@ -243,6 +245,16 @@ int main()
     }
     
     previous_time = SDL_GetTicks();
+
+    //check if the world folder exists
+    const char* path = "C:/world";
+
+    struct stat sb;
+
+    if(stat(path, &sb) == 0)
+    {
+        //world folder exists, so we can write chunks to it
+    }
 
     while(game.window.running)
     {
@@ -271,60 +283,166 @@ int main()
 
                     if(check_chunk == NULL)
                     {
-                        //chunk doesn't exist, make it
                         Chunk* new_chunk = find_free_chunk_slot(array_size(chunks_array), chunks_array);
-                        
-                        if(new_chunk != NULL)
+
+                        std::string name = "world/" + std::to_string(loop_chunk_index.x) + "," + std::to_string(loop_chunk_index.y);
+
+                        std::ifstream chunk_load;
+
+                        chunk_load.open(name, std::ios::binary | std::ios::in);
+
+                        //first check if a file exists for the chunk
+                        if(chunk_load.is_open())
                         {
-                            float noise_x = loop_chunk_index.x + 999;
-                            float noise_y = loop_chunk_index.y + 999;
-                            
-                            new_chunk->index = loop_chunk_index;
-                            new_chunk->exists = true;
+                            //a save exists so load the chunk from the file
+                            chunk_load.read(reinterpret_cast<char*>(new_chunk), 276);
 
-                            //tiles
-                            for(int  k = 0; k < chunk_tiles * chunk_tiles; k++)
+                            printf(" --- Chunk Save Loaded --- \n");
+
+                            printf("Tiles %d\n", new_chunk->tiles);
+
+                            chunk_load.close();
+                        }
+                        else
+                        {
+                            //no save exists, make the chunk for the first time and we will save
+                            if(new_chunk != NULL)
                             {
-                                int tile_x = k % chunk_tiles;
-                                int tile_y = floor(k / chunk_tiles);
+                                float noise_x = loop_chunk_index.x + 999;
+                                float noise_y = loop_chunk_index.y + 999;
 
-                                float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
-                                float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
-                                                                                        
-                                float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.001, 4);
+                                //debug
+                                // noise_x = loop_chunk_index.x;
+                                // noise_y = loop_chunk_index.y;
+                                
+                                new_chunk->index = loop_chunk_index;
+                                new_chunk->exists = true;
 
-                                TileType tile;
+                                //tiles
+                                for(int k = 0; k < chunk_tiles * chunk_tiles; k++)
+                                {
+                                    int tile_x = k % chunk_tiles;
+                                    int tile_y = floor(k / chunk_tiles);
 
-                                if(tile_noise > 0 && tile_noise < 0.45)
-                                {
-                                    tile = tile_water;
-                                }
-                                else if(tile_noise > 0.45 && tile_noise < 0.6)
-                                {
-                                    tile = tile_dirt;
-                                }
-                                else if(tile_noise > 0.6 && tile_noise < 0.7)
-                                {
-                                    tile = tile_grass;
-                                }
-                                else if(tile_noise > 0.7)
-                                {
-                                    tile = tile_stone;
+                                    float noise_arg_x = (noise_x * chunk_size) + (tile_x * tile_size);
+                                    float noise_arg_y = (noise_y * chunk_size) + (tile_y * tile_size);
+                                                                                            
+                                    float tile_noise = perlin2d(noise_arg_x, noise_arg_y, 0.0015, 8);
+                                    float resource_noise = perlin2d(noise_arg_x - 9999, noise_arg_y - 9999, 0.01, 16);
+
+                                    TileType tile;
+
+                                    if(tile_noise > 0 && tile_noise < 0.45)
+                                    {
+                                        tile = tile_water;
+                                    }
+                                    else if(tile_noise > 0.45 && tile_noise < 0.6)
+                                    {
+                                        tile = tile_dirt;
+
+                                        //spawn trees
+                                        // if(resource_noise > 0.7)
+                                        // {
+                                        //     int free_index = find_free_entity();
+
+                                        //     if(free_index != -1)
+                                        //     {
+                                        //         //there is space on entities array
+                                        //         Entity* resource = &game.entities[free_index];
+
+                                        //         float resource_x = (loop_chunk_index.x * chunk_size + (tile_x * tile_size)) - chunk_size / 2;
+                                        //         float resource_y = (loop_chunk_index.y * chunk_size + (tile_y * tile_size)) - chunk_size / 2;
+
+                                        //         *resource = make_entity(V2{ resource_x, resource_y }, FLAG_LIFE);
+
+                                        //         resource->owner = new_chunk;
+
+                                        //         resource->animation_enabled = false;
+                                        //         resource->sprite = sprite_tree;
+                                        //     }
+                                        // }
+                                    }
+                                    else if(tile_noise > 0.6 && tile_noise < 0.7)
+                                    {
+                                        tile = tile_grass;
+                                    }
+                                    else if(tile_noise > 0.7)
+                                    {
+                                        tile = tile_stone;
+                                    }
+
+                                    new_chunk->tiles[k] = tile;
                                 }
 
-                                new_chunk->tiles[k] = tile;
+                                glGenTextures(1, &new_chunk->tileTexture);
+                                glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
+
+                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                                
+                                glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);
+
+                                std::ofstream chunk_save;
+
+                                chunk_save.open(name, std::ios::binary | std::ios::out);
+
+                                printf("Saving Tiles CHECK %d\n", new_chunk->tiles);
+
+                                chunk_save.write(reinterpret_cast<const char*>(new_chunk), sizeof(Chunk));
+
+                                chunk_save.close();
                             }
-
-                            glGenTextures(1, &new_chunk->tileTexture);
-                            glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
-
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                            
-                            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);                   
                         }
                     }
                 }
+            }
+        }
+
+        //delete chunks if unloaded
+        for(int i = 0; i < 999; i++)
+        {
+            Chunk* current_chunk = &chunks_array[i];
+
+            bool isLoaded = false;
+
+            V2i chunk_index = get_chunk_index(game.player->position.x, game.player->position.y);
+
+            for(int j = -chunk_unload; j <= chunk_unload; j++)
+            {
+                for(int k = -chunk_unload; k <= chunk_unload; k++)
+                {
+                    V2i loop_chunk_index = { chunk_index.x + j, chunk_index.y + k };
+
+                    if(loop_chunk_index.x == current_chunk->index.x)
+                    { 
+                        if(loop_chunk_index.y == current_chunk->index.y)
+                        {
+                            isLoaded = true;
+                        }
+                    }
+                }
+            }
+
+            if(!isLoaded)
+            {
+                //check if the chunk we are unloading is the owner of any entities
+                for(int i = 0; i < max_entity_count; i++)
+                {
+                    Entity* entity = &game.entities[i];
+
+                    if(entity->owner == current_chunk)
+                    {
+                        //if they are delete them
+                        *entity = Entity {0};
+                    }
+                }
+
+                //make a save for the chunk
+                //std::string name = "world/" + std::to_string(current_chunk->index.x) + "," + std::to_string(current_chunk->index.y);
+
+                
+
+               *current_chunk = Chunk {0};
             }
         }
 
@@ -337,17 +455,17 @@ int main()
 
         view = afx::camera_view_matrix(&camera);
 
-        glUseProgram(chunk_program);    
-
         //render chunks
         for(int i = 0; i < array_size(chunks_array); i++)
         {
+            glUseProgram(chunk_program); 
+
             glBindBuffer(GL_ARRAY_BUFFER, chunk_vbo);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, chunk_ebo);
 
             Chunk* current_chunk = &chunks_array[i];
 
-            V2i chunk_physical = { (current_chunk->index.x * 256), (current_chunk->index.y * 256) };
+            V2i chunk_physical = { (current_chunk->index.x * chunk_size), (current_chunk->index.y * chunk_size) };
 
             int sampler0_location = glGetUniformLocation(chunk_program, "ourTexture");
             int sampler1_location = glGetUniformLocation(chunk_program, "tileTexture");
@@ -365,7 +483,7 @@ int main()
 
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(chunk_physical.x, chunk_physical.y, 0.0f));
-            model = glm::scale(model, glm::vec3(256, 256, 0.0f));
+            model = glm::scale(model, glm::vec3(chunk_size, chunk_size, 0.0f));
 
             afx::setConstant(chunk_program, "model", model);
             afx::setConstant(chunk_program, "view", view);
@@ -397,11 +515,14 @@ int main()
             }
         }
 
+        //render entities
         for(int i = 0; i < game.render_amount; i++)
         {
             Entity* entity = game.render_entities[i];
 
             V2 entity_scale;
+
+            //render_entity();
 
             if(entity->animation_enabled)
             {
@@ -431,10 +552,10 @@ int main()
             if(entity->flags & FLAG_LIFE)
             {
                 glUseProgram(draw_program);
-                afx::drawRectangle(draw_program, view, projection, entity->position.x, entity->position.y - 48, (game.player->life.hp / 100) * 30, 5);
+                afx::drawRectangle(draw_program, view, projection, entity->position.x, entity->position.y - (entity->animation.frames[0].height) / 2, (entity->life.hp / 100) * 15, 5);
             }
 
-            if(entity->life.hp > 0) entity->life.hp -= 5 * game.delta_time;
+            //if(entity->life.hp > 0) entity->life.hp -= 5 * game.delta_time;
         }
 
         //test

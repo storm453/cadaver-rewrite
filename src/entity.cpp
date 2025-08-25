@@ -59,15 +59,40 @@ void player_attack(Entity* entity)
 
         entity->animation.playback_time = 0;
 
-        entity->player.swings++;
+        //entity->player.swings++;
 
-        if(entity->player.swings >= 3)
+        // if(entity->player.swings >= 3)
+        // {
+        //     entity->player.state = PlayerState::stab;
+        //     entity->player.swings = 0;
+        // }
+        // else
         {
-            entity->player.state = PlayerState::stab;
-            entity->player.swings = 0;
-        }
-        else
-        {
+            //damage entities that are close enough
+            for(int i = 0; i < max_entity_count; i++)
+            {
+                Entity* current_entity = &game.entities[i];
+
+                float distance = length(current_entity->position - entity->position);
+
+                if(distance <= 200)
+                {
+                    int isPlayer = current_entity->flags & FLAG_PLAYER;
+
+                    //they are close enough
+                    if((current_entity->flags & FLAG_LIFE) && (isPlayer == 0))
+                    {
+                        printf("HP BEFORE %f\n", current_entity->life.hp);
+
+                        current_entity->life.hp -= 25.0f;
+
+                        printf("HP AFTER %f\n", current_entity->life.hp);
+
+                        printf("Entity %d exists and can be damaged\n", i);
+                    }
+                }
+            }
+            
             entity->player.state = PlayerState::swing;
         }
     }
@@ -185,7 +210,7 @@ void entity_update(Entity* entity)
             case(EnemyState::idle): {
                 entity->character.target_velocity = V2{0,0};
 
-                if(player_distance <= 50)
+                if(player_distance <= 100)
                 {
                     entity->enemy.state = EnemyState::chase;
                 }
@@ -214,7 +239,11 @@ void entity_update(Entity* entity)
         if(entity->life.hp <= 10)
         {
             //delete the entity
-            entity = 0;
+            printf("I died oh no\n");
+
+            *entity = Entity {0};
+
+            printf("My new hp %f\n", entity->life.hp);
         }
     }
 }
