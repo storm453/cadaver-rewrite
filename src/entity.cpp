@@ -241,7 +241,9 @@ void entity_update(Entity* entity)
             //delete the entity
             printf("I died oh no\n");
 
-            *entity = Entity {0};
+            Entity empty_entity = {};
+            
+            *entity = empty_entity;
 
             printf("My new hp %f\n", entity->life.hp);
         }
