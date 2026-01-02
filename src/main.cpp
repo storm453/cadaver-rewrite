@@ -247,7 +247,12 @@ int main()
     previous_time = SDL_GetTicks();
 
     //check if the world folder exists
-    const char* path = "C:/world";
+
+    //windows
+    //const char* path = "C:/world";
+
+    //mac
+    const char* path = "/Users/adam/Documents/Tynebourne";
 
     struct stat sb;
 
@@ -433,7 +438,9 @@ int main()
                     if(entity->owner == current_chunk)
                     {
                         //if they are delete them
-                        *entity = Entity {0};
+                        Entity empty_entity = {};
+                        
+                        *entity = empty_entity;
                     }
                 }
 
@@ -441,8 +448,8 @@ int main()
                 //std::string name = "world/" + std::to_string(current_chunk->index.x) + "," + std::to_string(current_chunk->index.y);
 
                 
-
-               *current_chunk = Chunk {0};
+                Chunk empty_chunk = {};
+                *current_chunk = empty_chunk;
             }
         }
 
