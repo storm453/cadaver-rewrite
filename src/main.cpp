@@ -295,11 +295,11 @@ int main()
                         if(chunk_load.is_open())
                         {
                             //a save exists so load the chunk from the file
-                            chunk_load.read(reinterpret_cast<char*>(new_chunk), 276);
+                            chunk_load.read(reinterpret_cast<char*>(new_chunk), sizeof(Chunk));
 
                             printf(" --- Chunk Save Loaded --- \n");
 
-                            printf("Tiles %d\n", new_chunk->tiles);
+                            printf("%u \n", new_chunk->tiles);
 
                             chunk_load.close();
                         }
@@ -374,14 +374,6 @@ int main()
                                     new_chunk->tiles[k] = tile;
                                 }
 
-                                glGenTextures(1, &new_chunk->tileTexture);
-                                glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
-
-                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                                
-                                glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);
-
                                 std::ofstream chunk_save;
 
                                 chunk_save.open(name, std::ios::binary | std::ios::out);
@@ -393,6 +385,14 @@ int main()
                                 chunk_save.close();
                             }
                         }
+
+                        glGenTextures(1, &new_chunk->tileTexture);
+                        glBindTexture(GL_TEXTURE_2D, new_chunk->tileTexture);
+
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, chunk_tiles, chunk_tiles, 0, GL_RED, GL_UNSIGNED_BYTE, new_chunk->tiles);
                     }
                 }
             }
