@@ -229,7 +229,7 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
 
-    Sprite tiles_sheet = make_sprite("chunk_textures.png");
+    Sprite tiles_sheet = make_sprite("assets/chunk_textures.png");
     Sprite sprite_tree = make_sprite("assets/tree2.png");
 
     if(game.player != NULL) 
