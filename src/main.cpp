@@ -249,17 +249,17 @@ int main()
     //check if the world folder exists
 
     //windows
-    //const char* path = "C:/world";
+    const char* path = "C:/world";
 
     //mac
-    const char* path = "/Users/adam/Documents/Tynebourne";
+    //const char* path = "/Users/adam/Documents/Tynebourne";
 
     struct stat sb;
 
-    if(stat(path, &sb) == 0)
-    {
-        //world folder exists, so we can write chunks to it
-    }
+    // if(stat(path, &sb) == 0)
+    // {
+    //     //world folder exists, so we can write chunks to it
+    // }
 
     while(game.window.running)
     {
@@ -315,10 +315,6 @@ int main()
                             {
                                 float noise_x = loop_chunk_index.x + 999;
                                 float noise_y = loop_chunk_index.y + 999;
-
-                                //debug
-                                // noise_x = loop_chunk_index.x;
-                                // noise_y = loop_chunk_index.y;
                                 
                                 new_chunk->index = loop_chunk_index;
                                 new_chunk->exists = true;
@@ -346,26 +342,26 @@ int main()
                                         tile = tile_dirt;
 
                                         //spawn trees
-                                        // if(resource_noise > 0.7)
-                                        // {
-                                        //     int free_index = find_free_entity();
+                                        if(resource_noise > 0.7)
+                                        {
+                                            int free_index = find_free_entity();
 
-                                        //     if(free_index != -1)
-                                        //     {
-                                        //         //there is space on entities array
-                                        //         Entity* resource = &game.entities[free_index];
+                                            if(free_index != -1)
+                                            {
+                                                //there is space on entities array
+                                                Entity* resource = &game.entities[free_index];
 
-                                        //         float resource_x = (loop_chunk_index.x * chunk_size + (tile_x * tile_size)) - chunk_size / 2;
-                                        //         float resource_y = (loop_chunk_index.y * chunk_size + (tile_y * tile_size)) - chunk_size / 2;
+                                                float resource_x = (loop_chunk_index.x * chunk_size + (tile_x * tile_size)) - chunk_size / 2;
+                                                float resource_y = (loop_chunk_index.y * chunk_size + (tile_y * tile_size)) - chunk_size / 2;
 
-                                        //         *resource = make_entity(V2{ resource_x, resource_y }, FLAG_LIFE);
+                                                *resource = make_entity(V2{ resource_x, resource_y }, FLAG_LIFE);
 
-                                        //         resource->owner = new_chunk;
+                                                resource->owner = new_chunk;
 
-                                        //         resource->animation_enabled = false;
-                                        //         resource->sprite = sprite_tree;
-                                        //     }
-                                        // }
+                                                resource->animation_enabled = false;
+                                                resource->sprite = sprite_tree;
+                                            }
+                                        }
                                     }
                                     else if(tile_noise > 0.6 && tile_noise < 0.7)
                                     {
@@ -567,10 +563,6 @@ int main()
 
         //test
         glUseProgram(draw_program);
-
-        // afx::drawRectangle(draw_program, view, projection, 5, 5);
-        // afx::drawRectangle(draw_program, view, projection, 50, 5);
-        // afx::drawRectangle(draw_program, view, projection, 5, 50);
 
         // afx::drawUI(draw_program, -580, 300);
         // afx::drawUI(draw_program, -470, 300);
